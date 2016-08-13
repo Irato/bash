@@ -1,66 +1,95 @@
+#Identificacao de interfaces de rede
+ls /sys/class/net > /tmp/if.txt     #Lista as interfaces e escreve no arquivo if.txt
+numero=$(wc -l < /tmp/if.txt)       #Conta a quantidade de interfaces(linhas) do sistema 
+interface=(inexistente inexistente inexistente inexistente)
+#Se a quantidade de interfaces for menor ou igual a 4 escreve nas posicoes de 0 a 3 do verto de interfaces
+if [ $numero -le 4 ];then
+contador=1
+until [ $contador -eq $numero ];do
+interface[$contador]=$(sed -n $contador'p' /tmp/if.txt) 
+let contador+=1
+done
+fi
+
+
+
 #Criacao das Funcoes
-function auto_ip(){
-	echo "Configuracao das Interfaces de Rede:" > /tmp/log.tmp
-	sudo ifconfig eth0 up 
-	sudo ifconfig eth1 up 
-	sudo ifconfig eth0 172.24.1.1/24 
-	sudo ifconfig eth1 192.168.1.1/24 
-	sudo ifconfig >> /tmp/log.tmp
-	echo "Roteamento:" >> /tmp/log.tmp
-	sudo route -n >> /tmp/log.tmp
-}
 function voltar(){
 dialog	--title "Tela de Controle" \
-	--menu	"Escolhe uma opcao" 0 0 0 \
-	AUTOIP "Escolhe uma opcao" \
+	--menu "Escolhe uma opcao:" 0 0 0 \
 	IP "Configuracao Manual" \
-	PROC "Listar e Matar Processos" \
 	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+		"IP")
+			config_if
+			;;
+		"VOLTAR")
+			voltar
+			;;
+		esac
 }
 
 function config_if(){
 	dialog	--title "Configuracao Manual" \
 		--menu "Escolha uma Interface" 0 0 0 \
-		ETH0 "Interface Ethernet 0" \
-		ETH1 "Interface Ethernet 1" \
-		ETH2 "Interface Ethernet 2" \
-		ROUTE "Default Gateway e Roteamento" \
-		DNS "Domain Name Server" \
+	        ${interface[1]} "Interface de rede 1" \
+	        ${interface[2]} "Interface de rede 2" \
+	        ${interface[3]} "Interface de rede 3" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
 		
 		case $opt in
-			"ETH0")
-				dialog	--title "Config ETH0..." \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth0.conf
-					sudo ifconfig eth0 up	
-					ip=$(cat /tmp/eth0.conf)
-					sudo ifconfig eth0 $ip/24 
-					ifconfig eth0 > /tmp/eth0.log
+			${interface[1]})
+				dialog	--title "Config ${interface[0]}" \
+					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth1.conf
+					sudo ifconfig ${interface[1]} up	
+					ip=$(cat /tmp/eth1.conf)
+					sudo ifconfig eth1 $ip  
+					ifconfig ${interface[1]} >/tmp/eth1.log
 					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth0.log 22 70
+						--textbox /tmp/eth1.log 22 70
+
 				;;
+
+			${interface[2]})
+				dialog	--title "Config ${interface[2]}" \
+					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth2.conf
+					sudo ifconfig ${interface[2]} up 
+					ip=$(cat /tmp/eth2.conf)
+					sudo ifconfig ${interface[2]} $ip 
+					ifconfig ${interface[2]} >/tmp/eth2.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth2.log 22 70
+				;;
+
+			${interface[3]})
+				dialog	--title "Config ${interface[3]}" \
+					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth3.conf
+					sudo ifconfig ${interface[3]} up 
+					ip=$(cat /tmp/eth3.conf)
+					sudo ifconfig ${interface[3]} $ip 
+					ifconfig ${interface[3]} > /tmp/eth3.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth3.log 22 70
+				;;
+			"VOLTAR")
+		        	voltar
+				;;
+
 			*)
 				echo "Opcao Errada"
 				;;
 			esac
 }
 
-# Relacao de Menu Simples
+#Menu Principal 
 dialog	--title "Tela de Controle" \
 	--menu "Escolhe uma opcao:" 0 0 0 \
-	AUTOIP "Configuracao Automatico" \
 	IP "Configuracao Manual" \
-	PROC "Listar e Matar Processos" \
-	CRON "Configurar Crontab" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
-		"AUTOIP")
-			auto_ip
-			dialog	--title "Configuracoes Aplicadas" \
-				--textbox /tmp/log.tmp 22 70
-			;;
 		"IP")
 			config_if
 			;;
