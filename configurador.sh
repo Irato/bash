@@ -11,22 +11,8 @@ let contador+=1
 done
 fi
 
-#Criacao das Funcoes
-function voltar(){
-dialog	--title "Tela de Controle" \
-	--menu "Escolhe uma opcao:" 0 0 0 \
-	IP "Configuracao Manual" \
-	VOLTAR '' 2> /tmp/opcao
-	opt=$(cat /tmp/opcao)
-	case $opt in
-		"IP")
-			config_if
-			;;
-		"VOLTAR")
-			voltar
-			;;
-		esac
-}
+
+#Configuracao manual IPV4
 
 function config_if(){
 	dialog	--title "Configuracao Manual" \
@@ -84,19 +70,97 @@ function config_if(){
 			esac
 }
 
-#Menu Principal 
+#Funcoes de configuracao automatica
+
+function conf_automatica(){
+dialog --title " Configuração automatica do experimento" \
+       --menu "Escolha a versao de enderecamento IP " 0 0 0 \
+	IPV4 "Topologia com enderecos  IPV4" \
+	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+	"IPV4")
+	automatica_ipv4
+        ;;
+	"VOLTAR")
+	voltar
+	;;
+
+	
+	esac
+
+
+} #fim da funcao automatica
+
+#Funcao ipv4
+function automatica_ipv4(){
+dialog --title "Configuracao automatica da topologia IPV4" \
+       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
+        HostA "" \
+	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+
+        "HostA")
+	sudo ip addr flush dev ${interface[1]}
+	sudo ip link set ${interface[1]} up 
+	sudo ip addr add 10.1.3.2/24 dev ${interface[1]}  
+	sudo route add default gw 10.1.3.1/24 dev ${interface[1]}
+        sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
+	dialog	--backtitle "Resultado Configuracao.." \
+               	--textbox /tmp/eth1.log 22 70
+
+	;;
+
+	"VOLTAR")
+
+	;;
+
+	*)
+	echo "Opcao Errada"
+
+	;;
+	
+        esac
+}
+
+#Criacao das Funcoes
+function voltar(){
 dialog	--title "Tela de Controle" \
 	--menu "Escolhe uma opcao:" 0 0 0 \
 	IP "Configuracao Manual" \
+	Experimento "Configuracao dos hosts do experimento NAT64/DNS64" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 		"IP")
 			config_if
 			;;
-		"Voltar")
+		"Experimento")
+			conf_automatica	
+			;;
+		"VOLTAR")
 			voltar
 			;;
 		esac
+}
 
+#Menu Principal 
+dialog	--title "Tela de Controle" \
+	--menu "Escolhe uma opcao:" 0 0 0 \
+	IP "Configuracao \n Manual" \
+	Experimento "Configuracao dos hosts do experimento NAT64/DNS64" \
+	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+		"IP")
+			config_if
+			;;
+		"Experimento")
+			conf_automatica	
+			;;
+		"VOLTAR")
+			voltar
+			;;
+		esac
 
