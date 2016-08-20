@@ -11,8 +11,6 @@ let contador+=1
 done
 fi
 
-
-
 #Criacao das Funcoes
 function voltar(){
 dialog	--title "Tela de Controle" \
@@ -40,25 +38,26 @@ function config_if(){
 		opt=$(cat /tmp/opcao)
 		
 		case $opt in
+
 			${interface[1]})
-				dialog	--title "Config ${interface[0]}" \
+				dialog	--title "Config ${interface[1]}" \
 					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth1.conf
-					sudo ifconfig ${interface[1]} up	
+					sudo ip addr flush dev ${interface[1]}
+					sudo ip link set ${interface[1]} up 
 					ip=$(cat /tmp/eth1.conf)
-					sudo ifconfig eth1 $ip  
-					ifconfig ${interface[1]} >/tmp/eth1.log
+					sudo ip addr add $ip dev ${interface[1]}  
+				        sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth1.log 22 70
-
 				;;
 
 			${interface[2]})
 				dialog	--title "Config ${interface[2]}" \
 					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth2.conf
-					sudo ifconfig ${interface[2]} up 
+					sudo ip link set ${interface[2]} up 
 					ip=$(cat /tmp/eth2.conf)
-					sudo ifconfig ${interface[2]} $ip 
-					ifconfig ${interface[2]} >/tmp/eth2.log
+					sudo ip addr add $ip dev {$interface[2]}  
+				        sudo ip addr show dev ${interface[2]} >/tmp/eth2.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth2.log 22 70
 				;;
@@ -66,10 +65,10 @@ function config_if(){
 			${interface[3]})
 				dialog	--title "Config ${interface[3]}" \
 					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth3.conf
-					sudo ifconfig ${interface[3]} up 
+					sudo ip link set ${interface[3]} up 
 					ip=$(cat /tmp/eth3.conf)
-					sudo ifconfig ${interface[3]} $ip 
-					ifconfig ${interface[3]} > /tmp/eth3.log
+					sudo ip addr add $ip dev {$interface[3]}  
+				        sudo ip link show dev ${interface[3]} >/tmp/eth3.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth3.log 22 70
 				;;
