@@ -54,6 +54,7 @@ function config_if(){
 			${interface[2]})
 				dialog	--title "Config ${interface[2]}" \
 					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth2.conf
+					sudo ip addr flush dev ${interface[2]}
 					sudo ip link set ${interface[2]} up 
 					ip=$(cat /tmp/eth2.conf)
 					sudo ip addr add $ip dev {$interface[2]}  
@@ -65,6 +66,7 @@ function config_if(){
 			${interface[3]})
 				dialog	--title "Config ${interface[3]}" \
 					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth3.conf
+					sudo ip addr flush dev ${interface[3]}
 					sudo ip link set ${interface[3]} up 
 					ip=$(cat /tmp/eth3.conf)
 					sudo ip addr add $ip dev {$interface[3]}  
