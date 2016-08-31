@@ -97,6 +97,9 @@ function automatica_ipv4(){
 dialog --title "Configuracao automatica da topologia IPV4" \
        --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
         HostA "" \
+        HostB "" \
+        HostC "" \
+        HostD "" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
@@ -104,14 +107,53 @@ dialog --title "Configuracao automatica da topologia IPV4" \
         "HostA")
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip link set ${interface[1]} up 
-	sudo ip addr add 10.1.3.2/24 dev ${interface[1]}  
-	sudo route add default gw 10.1.3.1/24 dev ${interface[1]}
+	sudo ip addr add 10.10.3.2/24 dev ${interface[1]}  
+	sudo route add default gw 10.10.3.1/24 dev ${interface[1]}
         sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.." \
+	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/eth1.log 22 70
 
 	;;
 
+        "HostB")
+	sudo ip addr flush dev ${interface[1]}
+	sudo ip addr flush dev ${interface[2]}
+	sudo ip link set ${interface[1]} up 
+	sudo ip link set ${interface[2]} up 
+	sudo ip addr add 10.10.3.1/24 dev ${interface[1]}  
+	sudo ip addr add 10.10.2.2/24 dev ${interface[2]}  
+        sudo ip addr show >/tmp/eth1.log
+	dialog	--backtitle "Resultado Configuracao.. Host B" \
+               	--textbox /tmp/eth1.log 22 70
+
+	;;
+
+
+        "HostC")
+	sudo ip addr flush dev ${interface[1]}
+	sudo ip addr flush dev ${interface[2]}
+	sudo ip link set ${interface[1]} up 
+	sudo ip link set ${interface[2]} up 
+	sudo ip addr add 10.10.2.1/24 dev ${interface[1]}  
+	sudo ip addr add 10.10.1.2/24 dev ${interface[2]}  
+        sudo ip addr show >/tmp/eth1.log
+	dialog	--backtitle "Resultado Configuracao.. Host C" \
+               	--textbox /tmp/eth1.log 22 70
+
+;;
+
+        "HostD")
+	sudo ip addr flush dev ${interface[1]}
+	sudo ip addr flush dev ${interface[2]}
+	sudo ip link set ${interface[1]} up 
+	sudo ip link set ${interface[2]} up 
+	sudo dhclient ${interface[2]}
+	sudo ip addr add 10.10.1.1/24 dev ${interface[1]}  
+        sudo ip addr show >/tmp/eth1.log
+	dialog	--backtitle "Resultado Configuracao.. Host D" \
+               	--textbox /tmp/eth1.log 22 70
+
+;;
 	"VOLTAR")
 
 	;;
