@@ -122,6 +122,7 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip link set ${interface[2]} up 
 	sudo ip addr add 10.10.3.1/24 dev ${interface[1]}  
 	sudo ip addr add 10.10.2.2/24 dev ${interface[2]}  
+        sudo route add -net 10.10.1.0 netmask 255.255.255.0 dev ${interface[2]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host B" \
                	--textbox /tmp/eth1.log 22 70
@@ -136,6 +137,7 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip link set ${interface[2]} up 
 	sudo ip addr add 10.10.2.1/24 dev ${interface[1]}  
 	sudo ip addr add 10.10.1.2/24 dev ${interface[2]}  
+        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host C" \
                	--textbox /tmp/eth1.log 22 70
@@ -149,6 +151,8 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip link set ${interface[2]} up 
 	sudo dhclient ${interface[2]}
 	sudo ip addr add 10.10.1.1/24 dev ${interface[1]}  
+        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
+        sudo route add -net 10.10.2.0 netmask 255.255.255.0 dev ${interface[1]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host D" \
                	--textbox /tmp/eth1.log 22 70
