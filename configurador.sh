@@ -91,6 +91,10 @@ dialog --title " Configuração automatica do experimento" \
 	automatica_ipv6
         ;;
 
+	"ROTAS IPV6")
+	rota_estatica_ipv6
+        ;;
+
 	"VOLTAR")
 	voltar
 	;;
