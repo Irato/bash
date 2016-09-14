@@ -11,9 +11,6 @@ let contador+=1
 done
 fi
 
-#teste de second
-
-
 #Configuracao manual IPV4
 
 function config_if(){
@@ -78,6 +75,7 @@ function conf_automatica(){
 dialog --title " Configuração automatica do experimento" \
        --menu "Escolha a versao de enderecamento IP " 0 0 0 \
 	IPV4 "Topologia com enderecos  IPV4" \
+	ROTAS IPV4 "Topologia com enderecos  IPV4" \
 	IPV6 "Topologia com enderecos  IPV6" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
@@ -86,6 +84,9 @@ dialog --title " Configuração automatica do experimento" \
 	automatica_ipv4
         ;;
 
+	"ROTAS IPV4")
+	rota_estatica_ipv4
+        ;;
 	"IPV6")
 	automatica_ipv6
         ;;
@@ -116,7 +117,6 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip link set ${interface[1]} up 
 	sudo ip addr add 10.10.3.2/24 dev ${interface[1]}  
-	sudo route add default gw 10.10.3.1/24 dev ${interface[1]}
         sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/eth1.log 22 70
@@ -131,7 +131,6 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip link set ${interface[2]} up 
 	sudo ip addr add 10.10.3.1/24 dev ${interface[1]}  
 	sudo ip addr add 10.10.2.2/24 dev ${interface[2]}  
-        sudo route add -net 10.10.1.0 netmask 255.255.255.0 dev ${interface[2]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host B" \
                	--textbox /tmp/eth1.log 22 70
@@ -146,7 +145,6 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip link set ${interface[2]} up 
 	sudo ip addr add 10.10.2.1/24 dev ${interface[1]}  
 	sudo ip addr add 10.10.1.2/24 dev ${interface[2]}  
-        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host C" \
                	--textbox /tmp/eth1.log 22 70
@@ -160,8 +158,6 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	sudo ip link set ${interface[2]} up 
 	sudo dhclient ${interface[2]}
 	sudo ip addr add 10.10.1.1/24 dev ${interface[1]}  
-        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
-        sudo route add -net 10.10.2.0 netmask 255.255.255.0 dev ${interface[1]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host D" \
                	--textbox /tmp/eth1.log 22 70
@@ -180,6 +176,66 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 }
 
 
+#Funcao de roteamento estatico IPV4
+function rota_estatica_ipv4(){
+dialog --title "Configuracao automatica da topologia IPV4" \
+       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
+        HostA "" \
+        HostB "" \
+        HostC "" \
+        HostD "" \
+	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+
+
+        "HostA")
+	sudo route add default gw 10.10.3.1/24 dev ${interface[1]}
+        route > /tmp/route.log
+	dialog	--backtitle "Resultado Configuracao.. Host A" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv4	
+
+	;;
+
+        "HostB")
+        sudo route add -net 10.10.1.0 netmask 255.255.255.0 dev ${interface[2]}
+        route > /tmp/route.log
+	dialog	--backtitle "Resultado Configuracao.. Host B" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv4	
+
+	;;
+
+        "HostC")
+        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
+	dialog	--backtitle "Resultado Configuracao.. Host C" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv4	
+
+	;;
+
+        "HostD")
+
+        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
+        sudo route add -net 10.10.2.0 netmask 255.255.255.0 dev ${interface[1]}
+	dialog	--backtitle "Resultado Configuracao.. Host D" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv4	
+
+	;;
+	"VOLTAR")
+	voltar
+	;;
+
+	*)
+	echo "Opcao Errada"
+
+	;;
+	
+        esac
+}
+
 #Funcao ipv6
 function automatica_ipv6(){
 dialog --title "Configuracao automatica da topologia IPV6" \
@@ -196,8 +252,6 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip link set ${interface[1]} up 
 	sudo ip -6 addr add 2001:db8:3::2/64  dev ${interface[1]}  
-	sudo route -A inet6 add 2001:db8:2::/64 gw 2001:db8:3::1/64
-	sudo route -A inet6 add 2001:db8:1::/64 gw 2001:db8:3::1/64
         sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host E" \
                	--textbox /tmp/eth1.log 22 70
@@ -212,7 +266,6 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	sudo ip link set ${interface[2]} up 
 	sudo ip -6 addr add 2001:db8:3::1/64 dev ${interface[1]}  
 	sudo ip -6 addr add 2001:db8:2::2/64 dev ${interface[2]}  
-	sudo route -A inet6 add 2001:db8:1::/64 dev ${interface[2]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host F" \
                	--textbox /tmp/eth1.log 22 70
@@ -228,7 +281,6 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	sudo ip link set ${interface[2]} up 
 	sudo ip -6 addr add 2001:db8:2::1/64 dev ${interface[1]}  
 	sudo ip -6 addr add 2001:db8:1::2/64 dev ${interface[2]}  
-	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host G" \
                	--textbox /tmp/eth1.log 22 70
@@ -242,13 +294,77 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	sudo ip link set ${interface[2]} up 
 	sudo dhclient ${interface[2]}
 	sudo ip -6 addr add 2001:db8:1::1/64 dev ${interface[1]}  
-	sudo route -A inet6 add 2001:db8:2::/64 dev ${interface[1]}
-	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
         sudo ip addr show >/tmp/eth1.log
 	dialog	--backtitle "Resultado Configuracao.. Host H" \
                	--textbox /tmp/eth1.log 22 70
 	automatica_ipv6
 ;;
+	"VOLTAR")
+	voltar
+	;;
+
+	*)
+	echo "Opcao Errada"
+
+	;;
+	
+        esac
+}
+
+
+#Funcao de roteamento estatico IPV6
+function rota_estatica_ipv6(){
+dialog --title "Configuracao automatica da topologia IPV6" \
+       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
+        HostE "" \
+        HostF "" \
+        HostG "" \
+        HostH "" \
+	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+
+
+        "HostE")
+	sudo route -A inet6 add 2001:db8:2::/64 gw 2001:db8:3::1/64
+	sudo route -A inet6 add 2001:db8:1::/64 gw 2001:db8:3::1/64
+        route -6 > /tmp/route.log
+	dialog	--backtitle "Resultado Configuracao.. Host A" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv6	
+
+	;;
+
+        "HostF")
+	sudo route -A inet6 add 2001:db8:1::/64 dev ${interface[2]}
+        route -6 > /tmp/route.log
+	dialog	--backtitle "Resultado Configuracao.. Host A" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv6	
+
+
+	;;
+
+        "HostG")
+	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
+
+        route -6 > /tmp/route.log
+	dialog	--backtitle "Resultado Configuracao.. Host A" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv6	
+
+	;;
+
+        "HostH")
+	sudo route -A inet6 add 2001:db8:2::/64 dev ${interface[1]}
+	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
+
+        route -6 > /tmp/route.log
+	dialog	--backtitle "Resultado Configuracao.. Host A" \
+               	--textbox /tmp/route.log 22 70
+	rota_estatica_ipv6	
+
+	;;
 	"VOLTAR")
 	voltar
 	;;
