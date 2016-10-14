@@ -2,7 +2,7 @@
 ls /sys/class/net > /tmp/if.txt     #Lista as interfaces e escreve no arquivo if.txt
 numero=$(wc -l < /tmp/if.txt)       #Conta a quantidade de interfaces(linhas) do sistema 
 interface=(inexistente inexistente inexistente inexistente)
-#Se a quantidade de interfaces for menor ou igual a 4 escreve nas posicoes de 0 a 3 do verto de interfaces
+#Se a quantidade de interfaces for menor ou igual a 4 escreve nas posicoes de 0 a 3 do vetor de interfaces
 if [ $numero -le 4 ];then
 contador=1
 until [ $contador -eq $numero ];do
