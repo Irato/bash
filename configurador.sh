@@ -70,28 +70,30 @@ function config_if(){
 }
 
 #Funcoes de configuracao automatica
-
 function conf_automatica(){
-dialog --title " Configuração automatica do experimento" \
+
+dialog --title "Configuração automatica do experimento" \
        --menu "Escolha a versao de enderecamento IP " 0 0 0 \
 	IPV4 "Topologia com enderecos  IPV4" \
-	ROTAS IPV4 "Topologia com enderecos  IPV4" \
+	ROTAS_IPV4 "Topologia com enderecos  IPV4" \
 	IPV6 "Topologia com enderecos  IPV6" \
+	ROTAS_IPV6 "Topologia com enderecos  IPV6" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
+
 	"IPV4")
 	automatica_ipv4
         ;;
 
-	"ROTAS IPV4")
+	"ROTAS_IPV4")
 	rota_estatica_ipv4
         ;;
 	"IPV6")
 	automatica_ipv6
         ;;
 
-	"ROTAS IPV6")
+	"ROTAS_IPV6")
 	rota_estatica_ipv6
         ;;
 
@@ -99,6 +101,9 @@ dialog --title " Configuração automatica do experimento" \
 	voltar
 	;;
 
+	*)
+	echo "Opcao Errada"
+	;;
 	
 	esac
 
@@ -386,14 +391,14 @@ function voltar(){
 dialog	--title "Tela de Controle" \
 	--menu "Escolhe uma opcao:" 0 0 0 \
 	IP "Configuracao Manual" \
-	Experimento "Configuracao dos hosts do experimento NAT64/DNS64" \
+	E "Configuracao dos hosts do experimento NAT64/DNS64" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 		"IP")
 			config_if
 			;;
-		"Experimento")
+		"E")
 			conf_automatica	
 			;;
 		"VOLTAR")
@@ -405,15 +410,15 @@ dialog	--title "Tela de Controle" \
 #Menu Principal 
 dialog	--title "Tela de Controle" \
 	--menu "Escolhe uma opcao:" 0 0 0 \
-	IP "Configuracao \n Manual" \
-	Experimento "Configuracao dos hosts do experimento NAT64/DNS64" \
+	IP "Configuracao  Manual" \
+        E "Configuracao dos hosts do experimento NAT64/DNS64" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 		"IP")
 			config_if
 			;;
-		"Experimento")
+		"E")
 			conf_automatica	
 			;;
 		"VOLTAR")
