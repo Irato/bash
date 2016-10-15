@@ -199,7 +199,7 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 
 
         "HostA")
-	sudo route add default gw 10.10.3.1/24 dev ${interface[1]}
+	sudo route add default gw 10.10.3.1 dev ${interface[1]}
         route > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/route.log 22 70
