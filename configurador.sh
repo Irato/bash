@@ -335,8 +335,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
 
         "HostE")
-	sudo route -A inet6 add 2001:db8:2::/64 gw 2001:db8:3::1/64
-	sudo route -A inet6 add 2001:db8:1::/64 gw 2001:db8:3::1/64
+	sudo route -A inet6 add default gw 2001:db8:3::1
         route -6 > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/route.log 22 70
