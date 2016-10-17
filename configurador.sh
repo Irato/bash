@@ -456,26 +456,26 @@ case $opt in
 	sysctl -w net.ipv4.ip_forward=1
 
  	# Interface IPv4 #####
- 	sudo ip addr flush dev ${interface[1]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip addr add $ifacev4 dev ${interface[1]}
+ 	sudo ip addr flush dev ${interface[2]}
+	sudo ip link set ${interface[2]} up 
+	sudo ip addr add $ifacev4 dev ${interface[2]}
 
 	# Interface IPv6 #####
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[2]} up 
-	sudo ip -6 addr add $ifacev6 dev ${interface[2]}
+	sudo ip addr flush dev ${interface[1]}
+	sudo ip link set ${interface[1]} up 
+	sudo ip -6 addr add $ifacev6 dev ${interface[1]}
  }
 
 
  configNAT64(){
 
-#	DIR_TAYGA=$(find /home -type d -name tayga-0.9.2)
+	DIR_TAYGA=$(find /home -type d -name tayga-0.9.2)
 
-#	cd $DIR_TAYGA
+	cd $DIR_TAYGA
 
-#	./configure && make && make install
+	./configure && make && make install
 
-#	mkdir -p /var/db/tayga
+	mkdir -p /var/db/tayga
 
 	echo "tun-device nat64
 		ipv4-addr $TAYGA_IPV4ADDR
@@ -494,11 +494,11 @@ case $opt in
 	
 	if [ $doNAT = 0 ]; then
 		iptables -t nat -F 
-		iptables -t nat -A POSTROUTING -s $TAYGA_IPV4_POOL -o ${interface[1]} -j SNAT --to $ipv4nomask
+		iptables -t nat -A POSTROUTING -s $TAYGA_IPV4_POOL -o ${interface[2]} -j SNAT --to $ipv4nomask
 	fi
 	
-	iptables -A FORWARD -i ${interface[1]} -o nat64 -m state --state RELATED,ESTABLISHED -j ACCEPT 
-	iptables -A FORWARD -i nat64 -o ${interface[1]} -j ACCEPT
+	iptables -A FORWARD -i ${interface[2]} -o nat64 -m state --state RELATED,ESTABLISHED -j ACCEPT 
+	iptables -A FORWARD -i nat64 -o ${interface[2]} -j ACCEPT
 
 	echo -e "\n************* Configuração NAT64 completa! *******************\n"
 }
