@@ -398,7 +398,8 @@ function conf_NAT64(){
 	        "Endereço IPv4 do Tayga" "$TAYGA_IPV4ADDR" \
 	        "Endereço da interface IPv4" "$ifacev4" \
 	        "Endereço da interface IPv6" "$ifacev6" \
-			"Iniciar config. do NAT64" '' 2> /tmp/opt
+			"Iniciar config. do NAT64" "" \ 
+			"VOLTAR" '' 2> /tmp/opt
 		opt=$(cat /tmp/opt)
 
 case $opt in
@@ -499,6 +500,7 @@ case $opt in
 	
 	iptables -A FORWARD -i ${interface[2]} -o nat64 -m state --state RELATED,ESTABLISHED -j ACCEPT 
 	iptables -A FORWARD -i nat64 -o ${interface[2]} -j ACCEPT
+	tayga
 
 	echo -e "\n************* Configuração NAT64 completa! *******************\n"
 }
