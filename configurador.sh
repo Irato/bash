@@ -251,15 +251,15 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 function automatica_ipv6(){
 dialog --title "Configuracao automatica da topologia IPV6" \
        --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostE "" \
-        HostF "" \
-        HostG "" \
         HostH "" \
+        HostG "" \
+        HostF "" \
+        HostE "" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
-        "HostE")
+        "HostH")
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip link set ${interface[1]} up 
 	sudo ip -6 addr add 2001:db8:3::2/64  dev ${interface[1]}  
@@ -270,7 +270,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
 	;;
 
-        "HostF")
+        "HostG")
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip addr flush dev ${interface[2]}
 	sudo ip link set ${interface[1]} up 
@@ -284,7 +284,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	;;
 
 
-        "HostG")
+        "HostF")
 
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip addr flush dev ${interface[2]}
@@ -298,7 +298,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	automatica_ipv6
 ;;
 
-        "HostH")
+        "HostE")
 	sudo ip addr flush dev ${interface[1]}
 	sudo ip addr flush dev ${interface[2]}
 	sudo ip link set ${interface[1]} up 
@@ -327,16 +327,16 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 function rota_estatica_ipv6(){
 dialog --title "Configuracao automatica da topologia IPV6" \
        --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostE "" \
-        HostF "" \
-        HostG "" \
         HostH "" \
+        HostG "" \
+        HostF "" \
+        HostE "" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
 
-        "HostE")
+        "HostH")
 	sudo route -A inet6 add default gw 2001:db8:3::1
         route -6 > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
@@ -345,7 +345,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
 	;;
 
-        "HostF")
+        "HostG")
 	sudo route -A inet6 add 2001:db8:1::/64 dev ${interface[2]}
         route -6 > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
@@ -355,7 +355,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
 	;;
 
-        "HostG")
+        "HostF")
 	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
 
         route -6 > /tmp/route.log
@@ -365,7 +365,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
 	;;
 
-        "HostH")
+        "HostE")
 	sudo route -A inet6 add 2001:db8:2::/64 dev ${interface[1]}
 	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
 
