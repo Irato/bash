@@ -76,7 +76,8 @@ function conf_automatica(){
 
 dialog --title "Configuração automatica do experimento" \
        --menu "Escolha a versao de enderecamento IP " 0 0 0 \
-	IPV4 "Topologia com enderecos  IPV4" \
+    	IPV4 "Topologia com enderecos  IPV4" \
+    	OSPF "Topologia com enderecos  IPV4" \
 	ROTAS_IPV4 "Topologia com enderecos  IPV4" \
 	IPV6 "Topologia com enderecos  IPV6" \
 	ROTAS_IPV6 "Topologia com enderecos  IPV6" \
@@ -84,8 +85,12 @@ dialog --title "Configuração automatica do experimento" \
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
-	"IPV4")
+	  "IPV4")
 	automatica_ipv4
+        ;;
+
+	  "OSPF")
+	conf_ospf	
         ;;
 
 	"ROTAS_IPV4")
@@ -657,6 +662,325 @@ PREFIXNAT64="-"
 ifacev4="-"
 ifacev6="-"
 v6network="-"
+
+##################################################################OSPF IP4##################################################
+conf_ospf(){
+	#Funcao de roteamento estatico IPV4
+
+dialog --title "Configuracao automatica da topologia IPV4" \
+       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
+        HostA "" \
+        HostB "" \
+        HostC "" \
+        HostD "" \
+	VOLTAR '' 2> /tmp/opcao
+	opt=$(cat /tmp/opcao)
+	case $opt in
+
+
+        "HostA")
+echo "
+! -*- ospf -*-
+!
+! OSPFd sample configuration file
+!
+log stdout
+
+
+hostname RoteadorD
+password reverse
+log file /var/log/quagga/zebra.log
+log stdout
+!
+debug ospf event
+debug ospf packet all
+!
+!
+interface ${interface[1]}
+!
+interface lo
+!
+router ospf
+!network 172.24.17.0/24 area 0.0.0.0
+network 10.10.3.0/24 area 0.10.0.0
+!
+line vty
+" > /etc/quagga/ospfd.conf
+
+#########################################################
+echo "
+! -*- zebra -*-
+!
+! zebra sample configuration file
+!
+! $Id: zebra.conf.sample,v 1.1 2002/12/13 20:15:30 paul Exp $
+hostname HostA
+password reverse
+enable password reverse
+log file /var/log/quagga/zebra.log
+!
+debug zebra events
+debug zebra packet
+!
+interface enp0s3
+link-detect
+ip address 10.10.3.2/24
+ipv6 nd suppress-ra
+!
+interface lo
+!
+ip forwarding
+!
+line vty
+!
+" > /etc/quagga/zebra.conf
+
+echo "
+zebra=yes
+bgpd=no
+ospfd=yes
+opsf6d=no
+ripd=no
+ripngd=no
+isisd=no
+" > /etc/quagga/daemons
+;;
+        "HostB")
+
+echo "
+! -*- ospf -*-
+!
+! OSPFd sample configuration file
+!
+log stdout
+
+
+hostname RoteadorB
+password reverse
+log file /var/log/quagga/zebra.log
+log stdout
+!
+debug ospf event
+debug ospf packet all
+!
+!
+interface ${interface[1]}
+interface ${interface[2]}
+!
+interface lo
+!
+router ospf
+!network 172.24.17.0/24 area 0.0.0.0
+network 10.10.2.0/24 area 0.10.0.0
+network 10.10.3.0/24 area 0.10.0.0
+!
+line vty
+" > /etc/quagga/ospfd.conf
+
+
+echo "
+! -*- zebra -*-
+!
+! zebra sample configuration file
+!
+hostname HostB
+password reverse
+enable password reverse
+log file /var/log/quagga/zebra.log
+!
+debug zebra events
+debug zebra packet
+!
+interface ${interface[1]}
+link-detect
+ip address 10.10.3.1/24
+ipv6 nd suppress-ra
+!
+interface ${interface[2]}
+link-detect
+ip address 10.10.2.2/24
+ipv6 nd suppress-ra
+interface lo
+!
+ip forwarding
+!
+line vty
+!
+" > /etc/quagga/zebra.conf
+
+echo "
+zebra=yes
+bgpd=no
+ospfd=yes
+opsf6d=no
+ripd=no
+ripngd=no
+isisd=no
+" > /etc/quagga/daemons
+
+	;;
+
+        "HostC")
+
+
+echo "
+! -*- ospf -*-
+!
+! OSPFd sample configuration file
+!
+log stdout
+
+
+hostname RoteadorC
+password reverse
+log file /var/log/quagga/zebra.log
+log stdout
+!
+debug ospf event
+debug ospf packet all
+!
+!
+interface ${interface[1]}
+interface ${interface[2]}
+!
+interface lo
+!
+router ospf
+!network 172.24.17.0/24 area 0.0.0.0
+network 10.10.1.0/24 area 0.0.0.0
+network 10.10.2.0/24 area 0.10.0.0
+!
+line vty
+" > /etc/quagga/ospfd.conf
+
+echo "
+! -*- zebra -*-
+!
+! zebra sample configuration file
+!
+hostname HostC
+password reverse
+enable password reverse
+log file /var/log/quagga/zebra.log
+!
+debug zebra events
+debug zebra packet
+!
+interface ${interface[1]}
+link-detect
+ip address 10.10.2.1/24
+ipv6 nd suppress-ra
+!
+interface ${interface[2]}
+link-detect
+ip address 10.10.1.2/24
+ipv6 nd suppress-ra
+interface lo
+!
+ip forwarding
+!
+line vty
+!
+" > /etc/quagga/zebra.conf
+
+echo "
+zebra=yes
+bgpd=no
+ospfd=yes
+opsf6d=no
+ripd=no
+ripngd=no
+isisd=no
+" > /etc/quagga/daemons
+
+;;
+
+        "HostD")
+
+dialog	--title "Forwarder IPv4" \
+					--inputbox "Favor digitar o Forwarder IPv4 (ex.: 8.8.8.8)" 0 0 2>/tmp/endipv4.conf
+					ipborda=$(cat /tmp/endipv4.conf)
+
+echo "
+! -*- ospf -*-
+!
+! OSPFd sample configuration file
+!
+log stdout
+!
+hostname RoteadorD
+password reverse
+log file /var/log/quagga/zebra.log
+log stdout
+!
+debug ospf event
+debug ospf packet all
+!
+!
+interface ${interface[1]}
+interface ${interface[2]}
+!
+interface lo
+!
+router ospf
+!network 172.24.17.0/24 area 0.0.0.0
+network 10.10.1.0/24 area 0.0.0.0
+network $ipborda area 0.0.0.0
+!
+line vty
+" > /etc/quagga/ospfd.conf
+
+echo "
+! -*- zebra -*-
+!
+! zebra sample configuration file
+!
+hostname RouterD
+password zebra
+enable password zebra
+!
+debug zebra events
+debug zebra packet
+!
+interface ${interface[2]}
+link-detect
+ipv6 nd suppress-ra
+!
+interface ${interface[1]}
+link-detect
+ip address 10.10.1.1/24
+ipv6 nd suppress-ra
+! Static default route sample.
+!
+
+!
+interface lo
+link-detect
+ip address 65.0.0.1/32
+" > /etc/quagga/zebra.conf
+
+echo "
+zebra=yes
+bgpd=no
+ospfd=yes
+opsf6d=no
+ripd=no
+ripngd=no
+isisd=no
+" > /etc/quagga/daemons
+        
+	;;
+	"VOLTAR")
+	voltar
+	;;
+
+	*)
+	echo "Opcao Errada"
+
+	;;
+	
+        esac
+}
 
 #Criacao das  funcoes
 function voltar(){
