@@ -403,7 +403,7 @@ function conf_NAT64(){
 	        "Endereço IPv4 do Tayga" "$TAYGA_IPV4ADDR" \
 	        "Endereço da interface IPv4" "$ifacev4" \
 	        "Endereço da interface IPv6" "$ifacev6" \
-			"Iniciar config. do NAT64" "" \ 
+	        "Iniciar config. do NAT64" "" \
 			"VOLTAR" '' 2> /tmp/opt
 		opt=$(cat /tmp/opt)
 
