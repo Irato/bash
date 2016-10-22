@@ -11,11 +11,33 @@ let contador+=1
 done
 fi
 
-#Criacao das  funcoes
+#Conf manual
 
 #Configuracao manual IPV4
 
 function config_if(){
+	dialog	--title "Configuracao Manual" \
+		--menu "Escolha uma Interface" 0 0 0 \
+	        "Endereçamento IPv4" "Configura interfaces de rede com IPv4" \
+	        "Endereçamento IPv6" "Configura interfaces de rede com IPv6" \
+		VOLTAR '' 2> /tmp/opcao
+		opt=$(cat /tmp/opcao)
+		case $opt in
+		"Endereçamento IPv4")
+			config_if4
+		;;
+
+		"Endereçamento IPv6")
+			config_if6
+		;;
+
+		"VOLTAR")
+		voltar
+		;;
+
+		esac
+		}
+function config_if4(){
 	dialog	--title "Configuracao Manual" \
 		--menu "Escolha uma Interface" 0 0 0 \
 	        ${interface[1]} "Interface de rede 1" \
@@ -62,7 +84,7 @@ function config_if(){
 						--textbox /tmp/eth3.log 22 70
 				;;
 			"VOLTAR")
-		        	voltar
+		        config_if	
 				;;
 
 			*)
@@ -70,6 +92,66 @@ function config_if(){
 				;;
 			esac
 }
+
+
+
+#Configuracao manual IPV6
+
+function config_if6(){
+	dialog	--title "Configuracao Manual IPv6" \
+		--menu "Escolha uma Interface" 0 0 0 \
+	        ${interface[1]} "Interface de rede 1" \
+	        ${interface[2]} "Interface de rede 2" \
+	        ${interface[3]} "Interface de rede 3" \
+		VOLTAR '' 2> /tmp/opcao
+		opt=$(cat /tmp/opcao)
+		
+		case $opt in
+
+			${interface[1]})
+				dialog	--title "Config ${interface[1]}" \
+					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth1.conf
+					sudo ip addr flush dev ${interface[1]}
+					sudo ip link set ${interface[1]} up 
+					ip=$(cat /tmp/eth1.conf)
+					sudo ip -6 addr add $ip  dev ${interface[1]}  
+				    sudo ip -6 addr show dev ${interface[1]} >/tmp/eth1.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth1.log 22 70
+				;;
+
+			${interface[2]})
+				dialog	--title "Config ${interface[2]}" \
+					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth2.conf
+					sudo ip addr flush dev ${interface[2]}
+					sudo ip link set ${interface[2]} up 
+					ip=$(cat /tmp/eth2.conf)
+					sudo ip -6 addr add $ip dev {$interface[2]}  
+				        sudo ip -6 addr show dev ${interface[2]} >/tmp/eth2.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth2.log 22 70
+				;;
+
+			${interface[3]})
+				dialog	--title "Config ${interface[3]}" \
+					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth3.conf
+					sudo ip addr flush dev ${interface[3]}
+					sudo ip link set ${interface[3]} up 
+					ip=$(cat /tmp/eth3.conf)
+					sudo ip -6 addr add $ip dev {$interface[3]}  
+				        sudo ip -6 link show dev ${interface[3]} >/tmp/eth3.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth3.log 22 70
+				;;
+			"VOLTAR")
+				config_if	
+				;;
+
+			*)
+				echo "Opcao Errada"
+				;;
+		esac
+	}
 
 #Funcoes de configuracao automatica
 function conf_automatica(){
@@ -352,6 +434,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
         "HostG")
 	sudo route -A inet6 add 2001:db8:1::/64 dev ${interface[2]}
+	sudo route -A inet6 add 2001:db8:1:ffff::/96 dev ${interface[2]}
         route -6 > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/route.log 22 70
@@ -362,7 +445,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
         "HostF")
 	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
-
+	sudo route -A inet6 add 2001:db8:1:ffff::/96 dev ${interface[2]}
         route -6 > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/route.log 22 70
@@ -373,7 +456,6 @@ dialog --title "Configuracao automatica da topologia IPV6" \
         "HostE")
 	sudo route -A inet6 add 2001:db8:2::/64 dev ${interface[1]}
 	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
-
         route -6 > /tmp/route.log
 	dialog	--backtitle "Resultado Configuracao.. Host A" \
                	--textbox /tmp/route.log 22 70
@@ -453,6 +535,9 @@ case $opt in
 				configIP
 				configNAT64
 				;;
+			"VOLTAR")
+				voltar
+				;;
 			esac
 		}
 
@@ -528,7 +613,8 @@ dialog	--title "Configuração DNS64" \
  	        "Prefixo do NAT64" "$PREFIXNAT64" \
  	        "Endereço da interface IPv4" "$ifacev4" \
  	        "Rede IPv6 permitida" "$v6network" \
-			"Iniciar config. do DNS64" '' 2> /tmp/opt
+ 	        "Iniciar config. do DNS64" "" \
+			"VOLTAR" '' 2> /tmp/opt 
 		opt=$(cat /tmp/opt)
 
 
@@ -570,15 +656,6 @@ dialog	--title "Configuração DNS64" \
 					conf_DNS64
 				;;
 
-			# "Endereço da interface IPv6")
-			# 	dialog	--title "Config.  de endereço" \
-			# 		--inputbox "Favor digitar o endereço da interface IPv6 do roteador COM a máscara (ex.: 2001:db8:1::3/64)" 0 0 2>/tmp/ifacev6.conf
-			# 		ifacev6=$(cat /tmp/ifacev6.conf)
-			# 		echo "${ifacev6%???}" > /tmp/v6nomask
-			# 		ipv6nomask=$(cat /tmp/v6nomask)
-			# 		menu
-			# 	;;
-
 			"Iniciar config. do DNS64")
 				dialog --yesno 'Deseja realizar autenticação DNSSEC?' 0 0
 				doDNSSEC=$?
@@ -587,6 +664,9 @@ dialog	--title "Configuração DNS64" \
 				dialog --yesno 'Deseja que o DNS64 retorne apenas endereços IPv4? (prefixo + ipv4)' 0 0
 				doEXCLUDE=$?
 				write_config
+				;;
+			"VOLTAR")
+				voltar
 				;;
 			esac
 		}
@@ -989,8 +1069,7 @@ dialog	--title "Tela de Controle" \
 	IP "Configuracao  Manual" \
     "Experimento" "Configuracao automatica dos hosts do experimento NAT64/DNS64" \
 	NAT64 "Configuração do tayga no host D" \
-	DNS64 "Configuração do BIND no host D" \
-	VOLTAR '' 2> /tmp/opcao
+	"DNS64" "Configuração do BIND no host D"  2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 		"IP")
@@ -1004,9 +1083,6 @@ dialog	--title "Tela de Controle" \
 			;;
 		"DNS64")
 			conf_DNS64
-			;;
-		"VOLTAR")
-			voltar
 			;;
 		esac
 }
@@ -1017,8 +1093,7 @@ dialog	--title "Tela de Controle" \
 	IP "Configuracao  Manual" \
     "Experimento" "Configuracao automatica dos hosts do experimento NAT64/DNS64" \
 	"NAT64" "Configuração do tayga no host D" \
-	"DNS64" "Configuração do BIND no host D" \
-	VOLTAR '' 2> /tmp/opcao
+	"DNS64" "Configuração do BIND no host D"  2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 		"IP")
@@ -1032,8 +1107,5 @@ dialog	--title "Tela de Controle" \
 			;;
 		"DNS64")
 			conf_DNS64
-			;;
-		"VOLTAR")
-			voltar
 			;;
 		esac
