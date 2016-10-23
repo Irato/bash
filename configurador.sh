@@ -262,7 +262,7 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 	automatica_ipv4
 ;;
 	"VOLTAR")
-	voltar
+	conf_automatica	
 	;;
 
 	*)
@@ -323,7 +323,7 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 
 	;;
 	"VOLTAR")
-	voltar
+	conf_automatica
 	;;
 
 	*)
@@ -398,7 +398,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	automatica_ipv6
 ;;
 	"VOLTAR")
-	voltar
+	conf_automatica
 	;;
 
 	*)
@@ -463,7 +463,7 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 
 	;;
 	"VOLTAR")
-	voltar
+	conf_automatica
 	;;
 
 	*)
