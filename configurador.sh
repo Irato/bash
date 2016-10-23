@@ -1051,7 +1051,7 @@ isisd=no
         
 	;;
 	"VOLTAR")
-	voltar
+	conf_automatica
 	;;
 
 	*)
