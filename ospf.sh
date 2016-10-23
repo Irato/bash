@@ -7,30 +7,104 @@ interface=(inexistente inexistente inexistente inexistente)
 #Se a quantidade de interfaces for menor ou igual a 4 escreve nas posicoes de 0 a 3 do vetor de interfaces
 if [ $numero -le 4 ];then
 contador=1
-until [ $contador -eq $numero ];do
+until [ $contador -gt $numero ];do
 interface[$contador]=$(sed -n $contador'p' /tmp/if.txt) 
 let contador+=1
 done
 fi
 
+		rede1='-'
+		rede2='-'
+		rede3='-'
+		rede4='-'
+
 ospf_menu(){
 	dialog --title "Configuracao do protocolo OSPF" \
 		--menu "Escolha a configuracao:" 0 0 0 \
-	"Redes diretamente conectadas ao dispositivo" "" \
+	"Redes diretamente conectadas" "" \
 	"Area ao que o dispositivo pertence" "" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
-		"Redes diretamente conectadas ao dispositivo") 
-			ospf_menu
+		"Redes diretamente conectadas")
+		rede_area_ospf
 			;;
 		"Area ao que o dispositivo pertence")
-			ospf_menu
+		ospf_menu
 			;;
+		"VOLTAR")
+		conf_ospf
+;;
+		*)
+echo "opção errada"
+;;
 	esac
+}
+rede_area_ospf(){
 
 
+		dialog --title "Configuração de redes OSPF" \
+			--menu "Digite as redes diretamente conectadas as interfaces" 0 0 0 \
+			"Rede diretamente conectada a interface ${interface[1]}" "$rede1" \
+			"Rede diretamente conectada a interface ${interface[2]}" "$rede2" \
+			"Rede diretamente conectada a interface ${interface[3]}" "$rede3" \
+			"Rede diretamente conectada a interface ${interface[4]}" "$rede4" \
+		        VOLTAR '' 2> /tmp/opcao
+			opt=$(cat /tmp/opcao)
+			case $opt in
+			
+			"Rede diretamente conectada a interface ${interface[1]}")
+
+			if [ "${interface[1]}" == "lo" ] || [ "${interface[1]}" == "inexistente" ];then
+				rede1="rede local ou inexistente"
+			else
+			dialog --title "Digite as redes diretamente conectadas a interface ${interface[1]}" \
+				--backtitle "Configuração OSPF da rede IPV4" \
+				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede1
+			fi
+			rede_area_ospf
+			;;
+			"Rede diretamente conectada a interface ${interface[2]}")
+			if [ "${interface[2]}" == "lo" ] || [ "${interface[2]}" == "inexistente" ];then
+				rede2="rede local ou inexistente"
+			else
+			dialog --title "Digite as redes diretamente conectadas a interface ${interface[2]}" \
+				--backtitle "Configuração OSPF da rede IPV4" \
+				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede2
+			fi
+			rede_area_ospf
+			;;
+			"Rede diretamente conectada a interface ${interface[3]}")
+			if [ "${interface[3]}" == "lo" ] || [ "${interface[3]}" == "inexistente" ];then
+				rede3="rede local ou inexistente"
+			else
+			dialog --title "Digite as redes diretamente conectadas a interface ${interface[3]}" \
+				--backtitle "Configuração OSPF da rede IPV4" \
+				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede3
+			fi
+			rede_area_ospf
+			;;
+			"Rede diretamente conectada a interface ${interface[4]}")
+
+			if [ "${interface[4]}" == "lo" ] || [ "${interface[4]}" == "inexistente" ];then
+				rede4="rede local ou inexistente"
+			else
+			dialog --title "Digite as redes diretamente conectadas a interface ${interface[4]}" \
+				--backtitle "Configuração OSPF da rede IPV4" \
+				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede4
+			fi
+			rede_area_ospf
+			
+;;
+		"VOLTAR")
+	ospf_menu	
+;;
+		*)
+echo "opção errada"
+;;
+
+esac
 }
 
 daemons(){
@@ -62,7 +136,7 @@ dialog --title "Configuracao automatica da topologia IPV4" \
 
         "HostX")
 		ospf_menu
-		daemons
+#		daemons
 		;;
         "HostA")
 echo "
@@ -121,15 +195,8 @@ line vty
 !
 " > /etc/quagga/zebra.conf
 
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
+daemons
+
 ;;
         "HostB")
 
@@ -194,16 +261,7 @@ line vty
 !
 " > /etc/quagga/zebra.conf
 
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
-
+daemons
 	;;
 
         "HostC")
@@ -269,16 +327,7 @@ line vty
 !
 " > /etc/quagga/zebra.conf
 
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
-
+daemons
 ;;
 
         "HostD")
@@ -345,16 +394,7 @@ link-detect
 ip address 65.0.0.1/32
 " > /etc/quagga/zebra.conf
 
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
-        
+       daemons 
 	;;
 	"VOLTAR")
 		conf_ospf
