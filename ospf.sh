@@ -13,10 +13,7 @@ let contador+=1
 done
 fi
 
-		rede1='-'
-		rede2='-'
-		rede3='-'
-		rede4='-'
+rede=( - - - - )
 
 ospf_menu(){
 	dialog --title "Configuracao do protocolo OSPF" \
@@ -41,59 +38,46 @@ echo "opção errada"
 ;;
 	esac
 }
+rede_ospf(){
+
+
+			if [ "${interface[$1]}" == "lo" ] || [ "${interface[$1]}" == "inexistente" ];then
+			rede[$1]="rede local ou inexistente"	
+
+			else
+			dialog --title "Digite as redes diretamente conectadas a interface ${interface[$1]}" \
+				--backtitle "Configuração OSPF da rede IPV4" \
+				--inputbox "Exemplo de rede 192.168.1.0/24" 0 0 2>/tmp/redes
+			rede[$1]=$(cat /tmp/redes)
+			fi
+}
 rede_area_ospf(){
 
 
 		dialog --title "Configuração de redes OSPF" \
 			--menu "Digite as redes diretamente conectadas as interfaces" 0 0 0 \
-			"Rede diretamente conectada a interface ${interface[1]}" "$rede1" \
-			"Rede diretamente conectada a interface ${interface[2]}" "$rede2" \
-			"Rede diretamente conectada a interface ${interface[3]}" "$rede3" \
-			"Rede diretamente conectada a interface ${interface[4]}" "$rede4" \
+			"Rede diretamente conectada a interface ${interface[1]}" "${rede[1]}" \
+			"Rede diretamente conectada a interface ${interface[2]}" "${rede[2]}" \
+			"Rede diretamente conectada a interface ${interface[3]}" "${rede[3]}" \
+			"Rede diretamente conectada a interface ${interface[4]}" "${rede[4]}" \
 		        VOLTAR '' 2> /tmp/opcao
 			opt=$(cat /tmp/opcao)
 			case $opt in
 			
 			"Rede diretamente conectada a interface ${interface[1]}")
-
-			if [ "${interface[1]}" == "lo" ] || [ "${interface[1]}" == "inexistente" ];then
-				rede1="rede local ou inexistente"
-			else
-			dialog --title "Digite as redes diretamente conectadas a interface ${interface[1]}" \
-				--backtitle "Configuração OSPF da rede IPV4" \
-				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede1
-			fi
+			rede_ospf 1
 			rede_area_ospf
 			;;
 			"Rede diretamente conectada a interface ${interface[2]}")
-			if [ "${interface[2]}" == "lo" ] || [ "${interface[2]}" == "inexistente" ];then
-				rede2="rede local ou inexistente"
-			else
-			dialog --title "Digite as redes diretamente conectadas a interface ${interface[2]}" \
-				--backtitle "Configuração OSPF da rede IPV4" \
-				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede2
-			fi
+			rede_ospf 2
 			rede_area_ospf
 			;;
 			"Rede diretamente conectada a interface ${interface[3]}")
-			if [ "${interface[3]}" == "lo" ] || [ "${interface[3]}" == "inexistente" ];then
-				rede3="rede local ou inexistente"
-			else
-			dialog --title "Digite as redes diretamente conectadas a interface ${interface[3]}" \
-				--backtitle "Configuração OSPF da rede IPV4" \
-				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede3
-			fi
+			rede_ospf 3
 			rede_area_ospf
 			;;
 			"Rede diretamente conectada a interface ${interface[4]}")
-
-			if [ "${interface[4]}" == "lo" ] || [ "${interface[4]}" == "inexistente" ];then
-				rede4="rede local ou inexistente"
-			else
-			dialog --title "Digite as redes diretamente conectadas a interface ${interface[4]}" \
-				--backtitle "Configuração OSPF da rede IPV4" \
-				--inputbox "Exemplo de rede 192.168.1.0/24" 8 60 2>$rede4
-			fi
+			rede_ospf 4
 			rede_area_ospf
 			
 ;;
