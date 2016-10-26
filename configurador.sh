@@ -426,17 +426,17 @@ dialog --title "Configuracao automatica da topologia IPV6" \
         "HostH")
 	sudo route -A inet6 add default gw 2001:db8:3::1
         route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
+	dialog	--backtitle "Resultado Configuracao.. Host H" \
                	--textbox /tmp/route.log 22 70
 	rota_estatica_ipv6	
 
 	;;
 
         "HostG")
-	sudo route -A inet6 add 2001:db8:1::/64 dev ${interface[2]}
-	sudo route -A inet6 add 2001:db8:1:ffff::/96 dev ${interface[2]}
+	sudo route -A inet6 add 2001:db8:1::/64 gw 2001:db8:2::1 dev ${interface[2]}
+	sudo route -A inet6 add 2001:db8:1:ffff::/96 gw 2001:db8:2::1 dev ${interface[2]}
         route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
+	dialog	--backtitle "Resultado Configuracao.. Host G" \
                	--textbox /tmp/route.log 22 70
 	rota_estatica_ipv6	
 
@@ -444,20 +444,20 @@ dialog --title "Configuracao automatica da topologia IPV6" \
 	;;
 
         "HostF")
-	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
-	sudo route -A inet6 add 2001:db8:1:ffff::/96 dev ${interface[2]}
+	sudo route -A inet6 add 2001:db8:3::/64 gw 2001:db8:2::2 dev ${interface[1]}
+	sudo route -A inet6 add 2001:db8:1:ffff::/96 gw 2001:db8:1::1 dev ${interface[2]}
         route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
+	dialog	--backtitle "Resultado Configuracao.. Host F" \
                	--textbox /tmp/route.log 22 70
 	rota_estatica_ipv6	
 
 	;;
 
         "HostE")
-	sudo route -A inet6 add 2001:db8:2::/64 dev ${interface[1]}
-	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
+	sudo route -A inet6 add 2001:db8:2::/64 gw 2001:db8:1::2 dev ${interface[1]}
+	sudo route -A inet6 add 2001:db8:3::/64 gw 2001:db8:1::2 dev ${interface[1]}
         route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
+	dialog	--backtitle "Resultado Configuracao.. Host E" \
                	--textbox /tmp/route.log 22 70
 	rota_estatica_ipv6	
 
