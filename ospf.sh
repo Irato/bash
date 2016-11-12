@@ -63,20 +63,19 @@ debug ospf packet all
 !
 interface lo
 !
-router ospf
 " > /etc/quagga/ospfd.conf
 
 contador=1
 until [ $contador -gt $numero ];do
-	if [ "${interface[$contador]}" == "lo" ] || [ "${interface[$contador]}" == "inexistente" ];then
+	if [ "${rede[$contador]}" == "-" ] || [ "${rede[$contador]}" == "rede local ou inexistente" ];then
     echo 1 
 	else
 echo "!
+router ospf
 interface ${interface[$contador]}
 !
 network ${rede[$contador]} area ${area[$contador]}" >> /etc/quagga/ospfd.conf
     fi
-interface[$contador]= 
 let contador+=1
 done
 
