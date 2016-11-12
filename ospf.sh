@@ -71,9 +71,9 @@ until [ $contador -gt $numero ];do
     echo 1 
 	else
 echo "!
-router ospf
 interface ${interface[$contador]}
 !
+router ospf
 network ${rede[$contador]} area ${area[$contador]}" >> /etc/quagga/ospfd.conf
     fi
 let contador+=1
