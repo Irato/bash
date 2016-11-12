@@ -15,28 +15,64 @@ fi
 
 rede=( - - - - - )
 area=( - - - - - )
+id=( - - - - - )
+
+mp_ospf(){
+	dialog --title "Configuracao de protocolo OSPF" \
+			--menu "Escolha o protocolo IP para configuracao OSPF" 0 0 0 \
+			"Protocolo IPv4" "" \
+			"Protocolo IPv6" '' 2>/tmp/opcao
+	        opt=$(cat /tmp/opcao)
+			case $opt in
+
+				"Protocolo IPv4")
+				rede=( - - - - - )
+				area=( - - - - - )
+				id=( - - - - - )
+				ospf_menu 4	
+					;;
+					"Protocolo IPv6") 
+					rede=( - - - - - )
+					area=( - - - - - )
+					id=( - - - - - )
+					ospf_menu 6
+						;;
+				*)
+					echo "fim de script"
+					;;
+			esac
+}
 
 ospf_menu(){
+
 	dialog --title "Configuracao do protocolo OSPF" \
 		--menu "Escolha a configuracao:" 0 0 0 \
 	"Redes diretamente conectadas" "" \
 	"Area ao que o dispositivo pertence" "" \
+	"Id do dispositivo" "" \
 	"Configurar OSPF" "" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
 		"Redes diretamente conectadas")
-		m_rede_ospf
+		m_rede_ospf $1
 			;;
 		"Area ao que o dispositivo pertence")
-		m_area_ospf
+		m_area_ospf $1
+			;;
+		"Id do dispositivo")
+		m_id_ospfv6 $1
 			;;
 		"Configurar OSPF")
+			if [ $1 -eq 4 ]; then
 		conf_ospf
+	else
+		conf_ospfv6
+			fi	
 			;;
 		"VOLTAR")
-	    ospf_menu	
+	    mp_ospf	
 ;;
 		*)
 echo "opção errada"
@@ -44,8 +80,60 @@ echo "opção errada"
 	esac
 }
 
+id_ospfv6(){
+
+			if [ "${interface[$1]}" == "lo" ] || [ "${interface[$1]}" == "inexistente" ];then
+			rede[$1]="rede local ou inexistente"	
+
+			else
+			dialog --title "ID da interface ${interface[$1]}" \
+				--backtitle "ID da interface para configuracao do OSPF" \
+				--inputbox " Exemplo de rede ID 0.0.0.1 " 0 0 2>/tmp/id
+			id[$1]=$(cat /tmp/id)
+			fi
+}
+
+
+m_id_ospfv6(){
+
+		dialog --title "Configuração de redes OSPF" \
+			--menu "Digite as redes diretamente conectadas as interfaces" 0 0 0 \
+			"Id da interface ${interface[1]}" "${id[1]}" \
+			"Id da interface ${interface[2]}" "${id[2]}" \
+			"Id da interface ${interface[3]}" "${id[3]}" \
+			"Id da interface ${interface[4]}" "${id[4]}" \
+		        VOLTAR '' 2> /tmp/opcao
+			opt=$(cat /tmp/opcao)
+			case $opt in
+			
+			"Id da interface ${interface[1]}")
+			id_ospfv6 1
+			m_id_ospfv6 $1
+			;;
+		"Id da interface ${interface[2]}")
+			id_ospfv6 2
+			m_id_ospfv6 $1
+			;;
+		"Id da interface ${interface[3]}")
+			id_ospfv6 3
+			m_id_ospfv6 $1
+			;;
+		"Id da interface ${interface[4]}")
+			id_ospfv6 4
+			m_id_ospfv6 $1
+			;;
+		"VOLTAR")
+			ospf_menu $1	
+			;;
+			*)
+			echo "opção errada"
+			;;
+
+			esac
+}
+
 conf_ospf(){
-daemons
+daemons 4
 nome=$(hostname)
 
 echo "
@@ -81,6 +169,70 @@ done
 
 }
 
+conf_ospfv6(){
+daemons 6
+nome=$(hostname)
+
+echo "
+!
+hostname $nome
+password admin
+log stdout
+service advanced-vty
+!
+debug ospf6 neighbor state
+!
+interface lo0
+ipv6 ospf6 cost 1
+ipv6 ospf6 hello-interval 10
+ipv6 ospf6 dead-interval 40
+ipv6 ospf6 retransmit-interval 5
+ipv6 ospf6 priority 1
+ipv6 ospf6 transmit-delay 1
+ipv6 ospf6 instance-id 0
+!
+" > /etc/quagga/ospf6d.conf
+
+contador=1
+until [ $contador -gt $numero ];do
+	if [ "${rede[$contador]}" == "-" ] || [ "${rede[$contador]}" == "rede local ou inexistente" ];then
+    echo 1 
+	else
+echo "!
+interface ${interface[$contador]}
+!
+router ospf6
+router-id ${id[$contador]}
+redistribute static
+redistribute connected
+area  ${area[$contador]} range ${rede[$contador]}
+interface ${interface[$contador]} area ${area[$contador]}
+access-list access4 permit 127.0.0.1/32
+!" >> /etc/quagga/ospf6d.conf
+    fi
+let contador+=1
+done
+
+echo "!
+ipv6 access-list access6 permit 3ffe:501::/32
+ipv6 access-list access6 permit 2001:200::/48
+ipv6 access-list access6 permit ::1/128
+!
+ipv6 prefix-list test-prefix seq 1000 deny any
+!
+route-map static-ospf6 permit 10
+match ipv6 address prefix-list test-prefix
+set metric-type type-2
+set metric 2000
+!
+access-class access4
+ipv6 access-class access6
+exec-timeout 0 0
+!
+" >> /etc/quagga/ospf6d.conf
+
+}
+
 rede_ospf(){
 
 
@@ -109,23 +261,22 @@ m_rede_ospf(){
 			
 			"Rede diretamente conectada a interface ${interface[1]}")
 			rede_ospf 1
-			m_rede_ospf
+			m_rede_ospf $1
 			;;
 			"Rede diretamente conectada a interface ${interface[2]}")
 			rede_ospf 2
-			m_rede_ospf
+			m_rede_ospf $1
 			;;
 			"Rede diretamente conectada a interface ${interface[3]}")
 			rede_ospf 3
-			m_rede_ospf
+			m_rede_ospf $1
 			;;
 			"Rede diretamente conectada a interface ${interface[4]}")
 			rede_ospf 4
-			m_rede_ospf
-			
-;;
+			m_rede_ospf $1
+			;;
 		"VOLTAR")
-	ospf_menu	
+	ospf_menu $1
 ;;
 		*)
 echo "opção errada"
@@ -164,23 +315,23 @@ m_area_ospf(){
 			
 				"Area diretamente conectada a interface ${interface[1]}")
 			area_ospf 1
-			m_area_ospf
+			m_area_ospf $1
 			;;
 				"Area diretamente conectada a interface ${interface[2]}")
 			area_ospf 2
-			m_area_ospf
+			m_area_ospf $1
 			;;
 			"Area diretamente conectada a interface ${interface[3]}")
 			area_ospf 3
-			m_area_ospf
+			m_area_ospf $1
 			;;
 			"Area diretamente conectada a interface ${interface[4]}")
 			area_ospf 4
-			m_area_ospf
+			m_area_ospf $1
 			
 ;;
 		"VOLTAR")
-	ospf_menu	
+	ospf_menu $1
 ;;
 		*)
 echo "opção errada"
@@ -190,6 +341,20 @@ esac
 }
 
 daemons(){
+
+	if [ $1 -eq 6 ]; then
+echo "
+zebra=yes
+bgpd=no
+ospfd=no
+ospf6d=yes
+ripd=no
+ripngd=no
+isisd=no
+" > /etc/quagga/daemons
+
+else
+
 echo "
 zebra=yes
 bgpd=no
@@ -199,6 +364,8 @@ ripd=no
 ripngd=no
 isisd=no
 " > /etc/quagga/daemons
+
+	fi
 }
 
-ospf_menu
+mp_ospf
