@@ -94,9 +94,7 @@ function config_if4(){
 }
 
 
-
 #Configuracao manual IPV6
-
 function config_if6(){
 	dialog	--title "Configuracao Manual IPv6" \
 		--menu "Escolha uma Interface" 0 0 0 \
@@ -156,34 +154,20 @@ function config_if6(){
 #Funcoes de configuracao automatica
 function conf_automatica(){
 
-dialog --title "Configuração automatica do experimento" \
-       --menu "Escolha a versao de enderecamento IP " 0 0 0 \
-    	IPV4 "Topologia com enderecos  IPV4" \
-    	OSPF "Topologia com enderecos  IPV4" \
-	ROTAS_IPV4 "Topologia com enderecos  IPV4" \
-	IPV6 "Topologia com enderecos  IPV6" \
-	ROTAS_IPV6 "Topologia com enderecos  IPV6" \
-	VOLTAR '' 2> /tmp/opcao
+dialog --title "Configuração do experimento com software Quagga" \
+       --menu "Configure as interfaces e roteamento com protocolo OSPF " 0 0 0 \
+    	"Endereco IP" "Configuracao de interface de rede utilizando quagga" \
+    	"OSPF" "Roteamento OSPF utilizando quagga" \
+		"VOLTAR" '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
-	  "IPV4")
-	automatica_ipv4
+	  "Endereco IP")
+	  c_zebra
         ;;
 
 	  "OSPF")
-	conf_ospf	
-        ;;
-
-	"ROTAS_IPV4")
-	rota_estatica_ipv4
-        ;;
-	"IPV6")
-	automatica_ipv6
-        ;;
-
-	"ROTAS_IPV6")
-	rota_estatica_ipv6
+	  conf_ospf	
         ;;
 
 	"VOLTAR")
@@ -199,279 +183,151 @@ dialog --title "Configuração automatica do experimento" \
 
 } #fim da funcao automatica
 
-#Funcao ipv4
-function automatica_ipv4(){
-dialog --title "Configuracao automatica da topologia IPV4" \
-       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostA "" \
-        HostB "" \
-        HostC "" \
-        HostD "" \
-	VOLTAR '' 2> /tmp/opcao
-	opt=$(cat /tmp/opcao)
-	case $opt in
+#Configuracao das interfaces de rede via quagga (zebra)
 
-        "HostA")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip addr add 10.10.3.2/24 dev ${interface[1]}  
-        sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv4
+c_zebra(){
 
-	;;
+zebra=( - - - - - )
 
-        "HostB")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip link set ${interface[2]} up 
-	sudo ip addr add 10.10.3.1/24 dev ${interface[1]}  
-	sudo ip addr add 10.10.2.2/24 dev ${interface[2]}  
-        sudo ip addr show >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host B" \
-               	--textbox /tmp/eth1.log 22 70
-        automatica_ipv4
-	;;
+inf_zebra(){
 
+			if [ "${interface[$1]}" == "lo" ] || [ "${interface[$1]}" == "inexistente" ];then
+			zebra[$1]="rede local ou inexistente"	
 
-        "HostC")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip link set ${interface[2]} up 
-	sudo ip addr add 10.10.2.1/24 dev ${interface[1]}  
-	sudo ip addr add 10.10.1.2/24 dev ${interface[2]}  
-        sudo ip addr show >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host C" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv4
-;;
-
-        "HostD")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip link set ${interface[2]} up 
-	sudo dhclient ${interface[2]}
-	sudo ip addr add 10.10.1.1/24 dev ${interface[1]}  
-        sudo ip addr show >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host D" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv4
-;;
-	"VOLTAR")
-	conf_automatica	
-	;;
-
-	*)
-	echo "Opcao Errada"
-
-	;;
-	
-        esac
+			else
+			dialog --title "Digite o endereço IP da interface ${interface[$1]}" \
+				--backtitle "Configuração da interface de rede IPV4" \
+				--inputbox "Digite ENDERECO_IP/(CIDR)" 0 0 2>/tmp/zebra
+			zebra[$1]=$(cat /tmp/zebra)
+			fi
 }
 
-
-#Funcao de roteamento estatico IPV4
-function rota_estatica_ipv4(){
-dialog --title "Configuracao automatica da topologia IPV4" \
-       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostA "" \
-        HostB "" \
-        HostC "" \
-        HostD "" \
-	VOLTAR '' 2> /tmp/opcao
-	opt=$(cat /tmp/opcao)
-	case $opt in
+m_zebra(){
 
 
-        "HostA")
-	sudo route add default gw 10.10.3.1 dev ${interface[1]}
-        route > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv4	
-
+		dialog --title "Configuração de zebra" \
+			--menu "Digite as endereço da interface de rede" 0 0 0 \
+			"Endereço da interface ${interface[1]}" "${zebra[1]}" \
+			"Endereço da interface ${interface[2]}" "${zebra[2]}" \
+			"Endereço da interface ${interface[3]}" "${zebra[3]}" \
+			"Endereço da interface ${interface[4]}" "${zebra[4]}" \
+			"Configurar zebra" "" \
+		        VOLTAR '' 2> /tmp/opcao
+			opt=$(cat /tmp/opcao)
+			case $opt in
+			
+			"Endereço da interface ${interface[1]}")
+			inf_zebra 1
+			m_zebra $1
+			;;
+		"Endereço da interface ${interface[2]}")
+			inf_zebra 2
+			m_zebra $1
+			;;
+		"Endereço da interface ${interface[3]}")
+			inf_zebra 3
+			m_zebra $1
+			;;
+		"Endereço da interface ${interface[4]}")
+			inf_zebra 4
+			m_zebra $1
+;;
+        "Configurar zebra")
+			conf_zebra $1
 	;;
-
-        "HostB")
-        sudo route add -net 10.10.1.0 netmask 255.255.255.0 dev ${interface[2]}
-        route > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host B" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv4	
-
-	;;
-
-        "HostC")
-        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
-	dialog	--backtitle "Resultado Configuracao.. Host C" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv4	
-
-	;;
-
-        "HostD")
-
-        sudo route add -net 10.10.3.0 netmask 255.255.255.0 dev ${interface[1]}
-        sudo route add -net 10.10.2.0 netmask 255.255.255.0 dev ${interface[1]}
-	dialog	--backtitle "Resultado Configuracao.. Host D" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv4	
-
-	;;
-	"VOLTAR")
-	conf_automatica
-	;;
-
-	*)
-	echo "Opcao Errada"
-
-	;;
-	
-        esac
-}
-
-#Funcao ipv6
-function automatica_ipv6(){
-dialog --title "Configuracao automatica da topologia IPV6" \
-       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostH "" \
-        HostG "" \
-        HostF "" \
-        HostE "" \
-	VOLTAR '' 2> /tmp/opcao
-	opt=$(cat /tmp/opcao)
-	case $opt in
-
-        "HostH")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip -6 addr add 2001:db8:3::2/64  dev ${interface[1]}  
-        sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host E" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv6
-
-	;;
-
-        "HostG")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip link set ${interface[2]} up 
-	sudo ip -6 addr add 2001:db8:3::1/64 dev ${interface[1]}  
-	sudo ip -6 addr add 2001:db8:2::2/64 dev ${interface[2]}  
-        sudo ip addr show >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host F" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv6
-	;;
-
-
-        "HostF")
-
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip link set ${interface[2]} up 
-	sudo ip -6 addr add 2001:db8:2::1/64 dev ${interface[1]}  
-	sudo ip -6 addr add 2001:db8:1::2/64 dev ${interface[2]}  
-        sudo ip addr show >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host G" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv6
+		"VOLTAR")
+			mp_zebra 
+;;
+		*)
+echo "opção errada"
 ;;
 
-        "HostE")
-	sudo ip addr flush dev ${interface[1]}
-	sudo ip addr flush dev ${interface[2]}
-	sudo ip link set ${interface[1]} up 
-	sudo ip link set ${interface[2]} up 
-	sudo dhclient ${interface[2]}
-	sudo ip -6 addr add 2001:db8:1::1/64 dev ${interface[1]}  
-        sudo ip addr show >/tmp/eth1.log
-	dialog	--backtitle "Resultado Configuracao.. Host H" \
-               	--textbox /tmp/eth1.log 22 70
-	automatica_ipv6
-;;
-	"VOLTAR")
-	conf_automatica
-	;;
-
-	*)
-	echo "Opcao Errada"
-
-	;;
-	
-        esac
+esac
 }
 
+conf_zebra(){
+daemons
+nome=$(hostname)
 
-#Funcao de roteamento estatico IPV6
-function rota_estatica_ipv6(){
-dialog --title "Configuracao automatica da topologia IPV6" \
-       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostH "" \
-        HostG "" \
-        HostF "" \
-        HostE "" \
-	VOLTAR '' 2> /tmp/opcao
-	opt=$(cat /tmp/opcao)
-	case $opt in
+echo "
+! -*- zebra -*-
+!
+hostname $nome
+password admin 
+enable password admin
+log file /var/log/quagga/zebra.log
+!
+debug zebra events
+debug zebra packet
+!
+interface lo
+!
+!" > /etc/quagga/zebra.conf
+if [ $1 -eq 4 ]; then
 
+echo "ip forwarding" >> /etc/quagga/zebra.conf
+contador=1
+until [ $contador -gt $numero ];do
+	if [ "${zebra[$contador]}" == "-" ] || [ "${zebra[$contador]}" == "rede local ou inexistente" ];then
+    echo 1 
+	else
+echo "!
+interface ${interface[$contador]}
+link-detect
+ip address ${zebra[$contador]}
+ipv6 nd suppress-ra
+!" >> /etc/quagga/zebra.conf
+    fi
+let contador+=1
+done
 
-        "HostH")
-	sudo route -A inet6 add default gw 2001:db8:3::1
-        route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv6	
+else
+echo "ipv6 forwarding" >> /etc/quagga/zebra.conf
+contador=1
+until [ $contador -gt $numero ];do
+	if [ "${zebra[$contador]}" == "-" ] || [ "${zebra[$contador]}" == "rede local ou inexistente" ];then
+    echo 1 
+	else
+echo "!
+interface ${interface[$contador]}
+link-detect
+no ipv6 nd suppress-ra
+ipv6 nd ra-interval 10
+ipv6 address ${zebra[$contador]}
+!" >> /etc/quagga/zebra.conf
+    fi
+let contador+=1
+done
+fi
 
-	;;
+}
 
-        "HostG")
-	sudo route -A inet6 add 2001:db8:1::/64 dev ${interface[2]}
-	sudo route -A inet6 add 2001:db8:1:ffff::/96 dev ${interface[2]}
-        route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv6	
+mp_zebra(){
+	dialog --title "Configuracao de  intefaces via zebra" \
+			--menu "Escolha o protocolo IP para configuracao" 0 0 0 \
+			"Protocolo IPv4" "" \
+			"Protocolo IPv6" "" \
+            VOLTAR '' 2>/tmp/opcao
+	        opt=$(cat /tmp/opcao)
+			case $opt in
 
+				"Protocolo IPv4")
+					m_zebra 4
+					;;
+					"Protocolo IPv6") 
+					m_zebra 6
+						;;
+					"VOLTAR") 
+						voltar
+						;;
+				*)
+					echo "fim de script"
+					;;
+			esac
+}
 
-	;;
+mp_zebra
 
-        "HostF")
-	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
-	sudo route -A inet6 add 2001:db8:1:ffff::/96 dev ${interface[2]}
-        route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv6	
-
-	;;
-
-        "HostE")
-	sudo route -A inet6 add 2001:db8:2::/64 dev ${interface[1]}
-	sudo route -A inet6 add 2001:db8:3::/64 dev ${interface[1]}
-        route -6 > /tmp/route.log
-	dialog	--backtitle "Resultado Configuracao.. Host A" \
-               	--textbox /tmp/route.log 22 70
-	rota_estatica_ipv6	
-
-	;;
-	"VOLTAR")
-	conf_automatica
-	;;
-
-	*)
-	echo "Opcao Errada"
-
-	;;
-	
-        esac
 }
 
 #Funcao do tayga-NAT64
@@ -743,339 +599,342 @@ ifacev4="-"
 ifacev6="-"
 v6network="-"
 
-##################################################################OSPF IP4##################################################
+##################################################################OSPF IP ##################################################
 conf_ospf(){
-	#Funcao de roteamento estatico IPV4
 
-dialog --title "Configuracao automatica da topologia IPV4" \
-       --menu "Escolha qual sera a sua maquina na topologia: " 0 0 0 \
-        HostA "" \
-        HostB "" \
-        HostC "" \
-        HostD "" \
+rede=( - - - - - )
+area=( - - - - - )
+id= "-"
+
+mp_ospf(){
+	dialog --title "Configuracao de protocolo OSPF" \
+			--menu "Escolha o protocolo IP para configuracao OSPF" 0 0 0 \
+			"Protocolo IPv4" "" \
+			"Protocolo IPv6" '' 2>/tmp/opcao
+	        opt=$(cat /tmp/opcao)
+			case $opt in
+
+				"Protocolo IPv4")
+				rede=( - - - - - )
+				area=( - - - - - )
+				id=( - - - - - )
+				ospf_menu 4	
+					;;
+					"Protocolo IPv6") 
+					rede=( - - - - - )
+					area=( - - - - - )
+					id=( - - - - - )
+					ospf_menu 6
+						;;
+				*)
+					echo "fim de script"
+					;;
+			esac
+}
+
+ospf_menu(){
+
+	dialog --title "Configuracao do protocolo OSPF" \
+		--menu "Escolha a configuracao:" 0 0 0 \
+	"Redes diretamente conectadas" "" \
+	"Area ao que o dispositivo pertence" "" \
+	"Id do dispositivo" "" \
+	"Configurar OSPF" "" \
 	VOLTAR '' 2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 
-
-        "HostA")
-echo "
-! -*- ospf -*-
-!
-! OSPFd sample configuration file
-!
-log stdout
-
-
-hostname RoteadorD
-password reverse
-log file /var/log/quagga/zebra.log
-log stdout
-!
-debug ospf event
-debug ospf packet all
-!
-!
-interface ${interface[1]}
-!
-interface lo
-!
-router ospf
-!network 172.24.17.0/24 area 0.0.0.0
-network 10.10.3.0/24 area 0.10.0.0
-!
-line vty
-" > /etc/quagga/ospfd.conf
-
-#########################################################
-echo "
-! -*- zebra -*-
-!
-! zebra sample configuration file
-!
-! $Id: zebra.conf.sample,v 1.1 2002/12/13 20:15:30 paul Exp $
-hostname HostA
-password reverse
-enable password reverse
-log file /var/log/quagga/zebra.log
-!
-debug zebra events
-debug zebra packet
-!
-interface enp0s3
-link-detect
-ip address 10.10.3.2/24
-ipv6 nd suppress-ra
-!
-interface lo
-!
-ip forwarding
-!
-line vty
-!
-" > /etc/quagga/zebra.conf
-
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
+		"Redes diretamente conectadas")
+		m_rede_ospf $1
+			;;
+		"Area ao que o dispositivo pertence")
+		m_area_ospf $1
+			;;
+		"Id do dispositivo")
+		m_id_ospfv6 $1
+			;;
+		"Configurar OSPF")
+			if [ $1 -eq 4 ]; then
+		conf_ospf
+	else
+		conf_ospfv6
+			fi	
+			;;
+		"VOLTAR")
+	    mp_ospf	
 ;;
-        "HostB")
+		*)
+echo "opção errada"
+;;
+	esac
+}
+
+m_id_ospfv6(){
+
+			dialog --title "ID  do dispositivo}" \
+				--backtitle "ID do dispositivo para configuracao do OSPF" \
+				--inputbox " Exemplo de rede ID 0.0.0.1 " 0 0 2>/tmp/id
+			id=$(cat /tmp/id)
+
+	ospf_menu $1
+}
+
+conf_ospf(){
+daemons 4
+nome=$(hostname)
 
 echo "
 ! -*- ospf -*-
 !
-! OSPFd sample configuration file
-!
 log stdout
-
-
-hostname RoteadorB
-password reverse
+!
+hostname $nome
+password admin
 log file /var/log/quagga/zebra.log
 log stdout
 !
 debug ospf event
 debug ospf packet all
 !
-!
-interface ${interface[1]}
-interface ${interface[2]}
-!
 interface lo
 !
-router ospf
-!network 172.24.17.0/24 area 0.0.0.0
-network 10.10.2.0/24 area 0.10.0.0
-network 10.10.3.0/24 area 0.10.0.0
-!
-line vty
 " > /etc/quagga/ospfd.conf
 
-
-echo "
-! -*- zebra -*-
-!
-! zebra sample configuration file
-!
-hostname HostB
-password reverse
-enable password reverse
-log file /var/log/quagga/zebra.log
-!
-debug zebra events
-debug zebra packet
-!
-interface ${interface[1]}
-link-detect
-ip address 10.10.3.1/24
-ipv6 nd suppress-ra
-!
-interface ${interface[2]}
-link-detect
-ip address 10.10.2.2/24
-ipv6 nd suppress-ra
-interface lo
-!
-ip forwarding
-!
-line vty
-!
-" > /etc/quagga/zebra.conf
-
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
-
-	;;
-
-        "HostC")
-
-
-echo "
-! -*- ospf -*-
-!
-! OSPFd sample configuration file
-!
-log stdout
-
-
-hostname RoteadorC
-password reverse
-log file /var/log/quagga/zebra.log
-log stdout
-!
-debug ospf event
-debug ospf packet all
-!
-!
-interface ${interface[1]}
-interface ${interface[2]}
-!
-interface lo
+contador=1
+until [ $contador -gt $numero ];do
+	if [ "${rede[$contador]}" == "-" ] || [ "${rede[$contador]}" == "rede local ou inexistente" ];then
+    echo 1 
+	else
+echo "!
+interface ${interface[$contador]}
 !
 router ospf
-!network 172.24.17.0/24 area 0.0.0.0
-network 10.10.1.0/24 area 0.0.0.0
-network 10.10.2.0/24 area 0.10.0.0
-!
-line vty
-" > /etc/quagga/ospfd.conf
+network ${rede[$contador]} area ${area[$contador]}" >> /etc/quagga/ospfd.conf
+    fi
+let contador+=1
+done
+
+}
+
+conf_ospfv6(){
+daemons 6
+nome=$(hostname)
 
 echo "
-! -*- zebra -*-
 !
-! zebra sample configuration file
+hostname $nome
+password admin
+log stdout
+service advanced-vty
 !
-hostname HostC
-password reverse
-enable password reverse
-log file /var/log/quagga/zebra.log
+debug ospf6 neighbor state
 !
-debug zebra events
-debug zebra packet
+interface lo0
+ipv6 ospf6 cost 1
+ipv6 ospf6 hello-interval 10
+ipv6 ospf6 dead-interval 40
+ipv6 ospf6 retransmit-interval 5
+ipv6 ospf6 priority 1
+ipv6 ospf6 transmit-delay 1
+ipv6 ospf6 instance-id 0
 !
-interface ${interface[1]}
-link-detect
-ip address 10.10.2.1/24
-ipv6 nd suppress-ra
+" > /etc/quagga/ospf6d.conf
+
+contador=1
+until [ $contador -gt $numero ];do
+	if [ "${rede[$contador]}" == "-" ] || [ "${rede[$contador]}" == "rede local ou inexistente" ];then
+    echo 1 
+	else
+echo "!
+interface ${interface[$contador]}
 !
-interface ${interface[2]}
-link-detect
-ip address 10.10.1.2/24
-ipv6 nd suppress-ra
-interface lo
+router ospf6
+router-id ${id[$contador]}
+redistribute static
+redistribute connected
+area  ${area[$contador]} range ${rede[$contador]}
+interface ${interface[$contador]} area ${area[$contador]}
+access-list access4 permit 127.0.0.1/32
+!" >> /etc/quagga/ospf6d.conf
+    fi
+let contador+=1
+done
+
+echo "!
+ipv6 access-list access6 permit 3ffe:501::/32
+ipv6 access-list access6 permit 2001:200::/48
+ipv6 access-list access6 permit ::1/128
 !
-ip forwarding
+ipv6 prefix-list test-prefix seq 1000 deny any
+!
+route-map static-ospf6 permit 10
+match ipv6 address prefix-list test-prefix
+set metric-type type-2
+set metric 2000
 !
 line vty
+access-class access4
+ipv6 access-class access6
+exec-timeout 0 0
 !
-" > /etc/quagga/zebra.conf
+" >> /etc/quagga/ospf6d.conf
 
-echo "
-zebra=yes
-bgpd=no
-ospfd=yes
-opsf6d=no
-ripd=no
-ripngd=no
-isisd=no
-" > /etc/quagga/daemons
+}
 
+rede_ospf(){
+
+
+			if [ "${interface[$1]}" == "lo" ] || [ "${interface[$1]}" == "inexistente" ];then
+			rede[$1]="rede local ou inexistente"	
+
+			else
+			dialog --title "Digite as redes diretamente conectadas a interface ${interface[$1]}" \
+				--backtitle "Configuração OSPF " \
+				--inputbox "Exemplo de rede 192.168.1.0/24 ou 2001:db8:1:1::/64" 0 0 2>/tmp/redes
+			rede[$1]=$(cat /tmp/redes)
+			fi
+}
+
+m_rede_ospf(){
+
+
+		dialog --title "Configuração de redes OSPF" \
+			--menu "Digite as redes diretamente conectadas as interfaces" 0 0 0 \
+			"Rede diretamente conectada a interface ${interface[1]}" "${rede[1]}" \
+			"Rede diretamente conectada a interface ${interface[2]}" "${rede[2]}" \
+			"Rede diretamente conectada a interface ${interface[3]}" "${rede[3]}" \
+			"Rede diretamente conectada a interface ${interface[4]}" "${rede[4]}" \
+		        VOLTAR '' 2> /tmp/opcao
+			opt=$(cat /tmp/opcao)
+			case $opt in
+			
+			"Rede diretamente conectada a interface ${interface[1]}")
+			rede_ospf 1
+			m_rede_ospf $1
+			;;
+			"Rede diretamente conectada a interface ${interface[2]}")
+			rede_ospf 2
+			m_rede_ospf $1
+			;;
+			"Rede diretamente conectada a interface ${interface[3]}")
+			rede_ospf 3
+			m_rede_ospf $1
+			;;
+			"Rede diretamente conectada a interface ${interface[4]}")
+			rede_ospf 4
+			m_rede_ospf $1
+			;;
+		"VOLTAR")
+	ospf_menu $1
+;;
+		*)
+echo "opção errada"
 ;;
 
-        "HostD")
+esac
+}
 
-dialog	--title "Forwarder IPv4" \
-					--inputbox "Favor digitar o Forwarder IPv4 (ex.: 8.8.8.8)" 0 0 2>/tmp/endipv4.conf
-					ipborda=$(cat /tmp/endipv4.conf)
+area_ospf(){
 
+
+			if [ "${interface[$1]}" == "lo" ] || [ "${interface[$1]}" == "inexistente" ];then
+			area[$1]="rede local ou inexistente"	
+
+			else
+			dialog --title "Digite a area da interface ${interface[$1]}" \
+				--backtitle "Configuração da area OSPF" \
+				--inputbox "Exemplo de rede 0.0.0.0" 0 0 2>/tmp/area
+			area[$1]=$(cat /tmp/area)
+			fi
+
+}
+
+m_area_ospf(){
+
+
+		dialog --title "Configuração de redes OSPF" \
+			--menu "Digite a área OSPF onde estao conectadas as interfaces" 0 0 0 \
+			"Area diretamente conectada a interface ${interface[1]}" "${area[1]}" \
+			"Area diretamente conectada a interface ${interface[2]}" "${area[2]}" \
+			"Area diretamente conectada a interface ${interface[3]}" "${area[3]}" \
+			"Area diretamente conectada a interface ${interface[4]}" "${area[4]}" \
+		        VOLTAR '' 2> /tmp/opcao
+			opt=$(cat /tmp/opcao)
+			case $opt in
+			
+				"Area diretamente conectada a interface ${interface[1]}")
+			area_ospf 1
+			m_area_ospf $1
+			;;
+				"Area diretamente conectada a interface ${interface[2]}")
+			area_ospf 2
+			m_area_ospf $1
+			;;
+			"Area diretamente conectada a interface ${interface[3]}")
+			area_ospf 3
+			m_area_ospf $1
+			;;
+			"Area diretamente conectada a interface ${interface[4]}")
+			area_ospf 4
+			m_area_ospf $1
+			
+;;
+		"VOLTAR")
+	ospf_menu $1
+;;
+		*)
+echo "opção errada"
+;;
+
+esac
+}
+
+daemons(){
+
+	if [ $1 -eq 6 ]; then
 echo "
-! -*- ospf -*-
-!
-! OSPFd sample configuration file
-!
-log stdout
-!
-hostname RoteadorD
-password reverse
-log file /var/log/quagga/zebra.log
-log stdout
-!
-debug ospf event
-debug ospf packet all
-!
-!
-interface ${interface[1]}
-interface ${interface[2]}
-!
-interface lo
-!
-router ospf
-!network 172.24.17.0/24 area 0.0.0.0
-network 10.10.1.0/24 area 0.0.0.0
-network $ipborda area 0.0.0.0
-!
-line vty
-" > /etc/quagga/ospfd.conf
+zebra=yes
+bgpd=no
+ospfd=no
+ospf6d=yes
+ripd=no
+ripngd=no
+isisd=no
+" > /etc/quagga/daemons
 
-echo "
-! -*- zebra -*-
-!
-! zebra sample configuration file
-!
-hostname RouterD
-password zebra
-enable password zebra
-!
-debug zebra events
-debug zebra packet
-!
-interface ${interface[2]}
-link-detect
-ipv6 nd suppress-ra
-!
-interface ${interface[1]}
-link-detect
-ip address 10.10.1.1/24
-ipv6 nd suppress-ra
-! Static default route sample.
-!
-
-!
-interface lo
-link-detect
-ip address 65.0.0.1/32
-" > /etc/quagga/zebra.conf
+else
 
 echo "
 zebra=yes
 bgpd=no
 ospfd=yes
-opsf6d=no
+ospf6d=no
 ripd=no
 ripngd=no
 isisd=no
 " > /etc/quagga/daemons
-        
-	;;
-	"VOLTAR")
-	conf_automatica
-	;;
 
-	*)
-	echo "Opcao Errada"
+	fi
+}
 
-	;;
-	
-        esac
+mp_ospf
+
 }
 
 #Criacao das  funcoes
 function voltar(){
 dialog	--title "Tela de Controle" \
 	--menu "Escolha uma opcao:" 0 0 0 \
-	IP "Configuracao  Manual" \
-    "Experimento" "Configuracao automatica dos hosts do experimento NAT64/DNS64" \
-	NAT64 "Configuração do tayga no host D" \
-	"DNS64" "Configuração do BIND no host D"  2> /tmp/opcao
+	"IP" "Configuracao  estatica do roteamento e interfaces de rede" \
+    "Quagga" "Configuracao das interfaces de rede e OSPF via Quagga" \
+	"NAT64" "Configuração do tayga no host de desejado" \
+	"DNS64" "Configuração do BIND no host desejado"  2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
 		"IP")
 			config_if
 			;;
-		"Experimento")
+		"Quagga")
 			conf_automatica	
 			;;
 		"NAT64")
