@@ -14,75 +14,96 @@ fi
 #Conf manual
 
 #Configuracao manual IPV4
-
+ip=( - - - - - )
 function config_if(){
+	
 	dialog	--title "Configuracao Manual" \
 		--menu "Escolha uma Interface" 0 0 0 \
 	        "Endereçamento IPv4" "Configura interfaces de rede com IPv4" \
 	        "Endereçamento IPv6" "Configura interfaces de rede com IPv6" \
+	        "Roteamento" "Configura rotas redes com interfaces de rede IPv6 ou IPv4" \
+	        "SNAT" "Realiza SNAT via Iptables" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
 		case $opt in
 		"Endereçamento IPv4")
-			config_if4
+			config_endereco 4
 		;;
 
 		"Endereçamento IPv6")
-			config_if6
+			config_endereco 6
 		;;
-
+	    "Roteamento")
+			m_rota
+		;;
+	    "SNAT")
+			m_snaat
+		;;
 		"VOLTAR")
 		voltar
 		;;
 
 		esac
 		}
-function config_if4(){
+	
+
+	endereco_ip(){
+
+		if [ $1 -eq 4 ]; then
+				dialog	--title "Config ${interface[$2]}" \
+					--inputbox "Favor Digitar Endereco_IP/(CIDR)" 0 0 2>/tmp/eth.conf
+					sudo ip addr flush dev ${interface[$2]}
+					sudo ip link set ${interface[$2]} up 
+					ip[$2]=$(cat /tmp/eth.conf)
+					sudo ip addr add ${ip[$2]} dev ${interface[$2]}  
+				        sudo ip addr show dev ${interface[$2]} >/tmp/eth.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth.log 22 70
+				else
+
+					dialog	--title "Config ${interface[$2]}" \
+					--inputbox "Favor Digitar Endereco_IP/(CIDR)" 0 0 2>/tmp/eth.conf
+					sudo ip addr flush dev ${interface[$2]}
+					sudo ip link set ${interface[$2]} up 
+					ip[$2]=$(cat /tmp/eth.conf)
+					sudo ip -6 addr add ${ip[$2]} dev ${interface[$2]}  
+				    sudo ip -6 addr show dev ${interface[$2]} >/tmp/eth.log
+					dialog	--backtitle "Resultado Configuracao.." \
+						--textbox /tmp/eth.log 22 70
+				fi
+
+				config_endereco $1
+
+		}
+
+function config_endereco(){
 	dialog	--title "Configuracao Manual" \
 		--menu "Escolha uma Interface" 0 0 0 \
 	        ${interface[1]} "Interface de rede 1" \
 	        ${interface[2]} "Interface de rede 2" \
 	        ${interface[3]} "Interface de rede 3" \
+	        ${interface[4]} "Interface de rede 3" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
 		
 		case $opt in
 
 			${interface[1]})
-				dialog	--title "Config ${interface[1]}" \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth1.conf
-					sudo ip addr flush dev ${interface[1]}
-					sudo ip link set ${interface[1]} up 
-					ip=$(cat /tmp/eth1.conf)
-					sudo ip addr add $ip dev ${interface[1]}  
-				        sudo ip addr show dev ${interface[1]} >/tmp/eth1.log
-					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth1.log 22 70
+			endereco_ip $1 1
 				;;
 
 			${interface[2]})
-				dialog	--title "Config ${interface[2]}" \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth2.conf
-					sudo ip addr flush dev ${interface[2]}
-					sudo ip link set ${interface[2]} up 
-					ip=$(cat /tmp/eth2.conf)
-					sudo ip addr add $ip dev {$interface[2]}  
-				        sudo ip addr show dev ${interface[2]} >/tmp/eth2.log
-					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth2.log 22 70
+			endereco_ip $1 2
 				;;
 
 			${interface[3]})
-				dialog	--title "Config ${interface[3]}" \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth3.conf
-					sudo ip addr flush dev ${interface[3]}
-					sudo ip link set ${interface[3]} up 
-					ip=$(cat /tmp/eth3.conf)
-					sudo ip addr add $ip dev {$interface[3]}  
-				        sudo ip link show dev ${interface[3]} >/tmp/eth3.log
-					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth3.log 22 70
+			endereco_ip $1 3
 				;;
+
+			${interface[4]})
+			endereco_ip $1 4
+				;;
+
 			"VOLTAR")
 		        config_if	
 				;;
@@ -93,63 +114,176 @@ function config_if4(){
 			esac
 }
 
+m_rota(){
 
-#Configuracao manual IPV6
-function config_if6(){
-	dialog	--title "Configuracao Manual IPv6" \
-		--menu "Escolha uma Interface" 0 0 0 \
+	dialog	--title "Configuracao Rota estatica" \
+		--menu "Escolha um protocolo IP para adicionar uma rota" 0 0 0 \
+	        "Protocolo IPv4" "Adiciona rota estatica na tabela IPv4" \
+	        "Protocolo IPv6" "Adiciona rota estatica na tabela IPv6" \
+		VOLTAR '' 2> /tmp/opcao
+		opt=$(cat /tmp/opcao)
+		case $opt in
+		"Protocolo IPv4")
+
+			dialog --title "Escolha o tipo de rota" \
+					--menu "Rota para rede especifica, ou rota default" 0 0 0 \
+					"Rota default" "" \
+					"Rota para rede especifica" "" \
+					"VOLTAR" '' 2> /tmp/opcao
+					opt=$(cat /tmp/opcao)
+					case $opt in
+
+		"Rota default")
+		digita_rota 1
+		ip route add default via $rota_salto dev $rota_interface
+		;;
+		"Rota para rede especifica")
+		digita_rota 2
+		ip route add $rota_ip via $rota_salto dev $rota_interface
+		;;
+
+		"VOLTAR")
+		m_rota	
+		;;
+					esac
+					
+		;;
+
+		"Protocolo IPv6")
+
+			dialog --title "Escolha o tipo de rota" \
+					--menu "Rota para rede especifica, ou rota default" 0 0 0 \
+					"Rota default" "" \
+					"Rota para rede especifica" "" \
+					VOLTAR '' 2> /tmp/opcao
+					opt=$(cat /tmp/opcao)
+					case $opt in
+
+		"Rota default")
+		digita_rota 1
+		ip -6 route add default via $rota_salto dev $rota_interface
+		;;
+		"Rota para rede especifica")
+		digita_rota 2
+		ip -6 route add $rota_ip via $rota_salto dev $rota_interface
+		;;
+
+		"VOLTAR")
+		m_rota	
+		;;
+					esac
+		;;
+
+		"VOLTAR")
+		config_if
+		;;
+
+		esac
+		
+}
+
+digita_rota(){
+
+					dialog	--title "Configuracao de rota default" \
+					--inputbox "Digite o endereco da interface de rede do proximo salto Endereco_IP/(CIDR)" 0 0 2>/tmp/rota_salto.conf
+					rota_salto=$(cat /tmp/rota_ip.conf)
+
+				if [ $1 -eq 2 ]; then
+					dialog	--title "Configuracao de rota estatica" \
+					--inputbox "Digite o endereco da rede de destino Endereco_IP/(CIDR)" 0 0 2>/tmp/rota_ip.conf
+					rota_ip=$(cat /tmp/rota_ip.conf)
+				fi
+
+
+	dialog	--title "Roteamento Estatico" \
+		--menu "Escolha a Interface de saida da rota digitada " 0 0 0 \
 	        ${interface[1]} "Interface de rede 1" \
 	        ${interface[2]} "Interface de rede 2" \
 	        ${interface[3]} "Interface de rede 3" \
+	        ${interface[4]} "Interface de rede 4" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
 		
 		case $opt in
 
 			${interface[1]})
-				dialog	--title "Config ${interface[1]}" \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth1.conf
-					sudo ip addr flush dev ${interface[1]}
-					sudo ip link set ${interface[1]} up 
-					ip=$(cat /tmp/eth1.conf)
-					sudo ip -6 addr add $ip  dev ${interface[1]}  
-				    sudo ip -6 addr show dev ${interface[1]} >/tmp/eth1.log
-					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth1.log 22 70
+				rota_interface=${interface[1]}
 				;;
 
 			${interface[2]})
-				dialog	--title "Config ${interface[2]}" \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth2.conf
-					sudo ip addr flush dev ${interface[2]}
-					sudo ip link set ${interface[2]} up 
-					ip=$(cat /tmp/eth2.conf)
-					sudo ip -6 addr add $ip dev {$interface[2]}  
-				        sudo ip -6 addr show dev ${interface[2]} >/tmp/eth2.log
-					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth2.log 22 70
+				rota_interface=${interface[2]}
 				;;
 
 			${interface[3]})
-				dialog	--title "Config ${interface[3]}" \
-					--inputbox "Favor Digitar um Endereco IP" 0 0 2>/tmp/eth3.conf
-					sudo ip addr flush dev ${interface[3]}
-					sudo ip link set ${interface[3]} up 
-					ip=$(cat /tmp/eth3.conf)
-					sudo ip -6 addr add $ip dev {$interface[3]}  
-				        sudo ip -6 link show dev ${interface[3]} >/tmp/eth3.log
-					dialog	--backtitle "Resultado Configuracao.." \
-						--textbox /tmp/eth3.log 22 70
+				rota_interface=${interface[3]}
 				;;
+
+			${interface[4]})
+				rota_interface=${interface[4]}
+				;;
+
 			"VOLTAR")
-				config_if	
+				m_rota
 				;;
 
 			*)
 				echo "Opcao Errada"
 				;;
-		esac
-	}
+			esac
+}
+
+m_snaat(){
+
+			dialog --title "Digite os enderecos fonte" \
+				--backtitle "Pool de endereços da rede que se deseja realizar SNAT" \
+				--inputbox "Digite ENDERECO_IP/(CIDR)" 0 0 2>/tmp/mux
+			fonte=$(cat /tmp/mux)
+
+			dialog --title "Digite o enderecos destino" \
+				--backtitle "Endereço de rede que ira representar os endereços da pool" \
+				--inputbox "Digite ENDERECO_IP/(CIDR)" 0 0 2>/tmp/mux
+			destino=$(cat /tmp/mux)
+
+	dialog	--title "Interface SNAT" \
+		--menu "Escolha a Interface de saida da rota digitada " 0 0 0 \
+	        ${interface[1]} "Interface de rede 1" \
+	        ${interface[2]} "Interface de rede 2" \
+	        ${interface[3]} "Interface de rede 3" \
+	        ${interface[4]} "Interface de rede 4" \
+		VOLTAR '' 2> /tmp/opcao
+		opt=$(cat /tmp/opcao)
+		
+		case $opt in
+
+			${interface[1]})
+				st_interface=${interface[1]}
+				;;
+
+			${interface[2]})
+				st_interface=${interface[2]}
+				;;
+
+			${interface[3]})
+				st_interface=${interface[3]}
+				;;
+
+			${interface[4]})
+				st_interface=${interface[4]}
+				;;
+
+			"VOLTAR")
+				config_if
+				;;
+
+			*)
+				echo "Opcao Errada"
+				;;
+			esac
+
+		iptables -t nat -F 
+		iptables -t nat -A POSTROUTING -s $fonte -o $st_interface -j SNAT --to $destino
+
+}
 
 #Funcoes de configuracao automatica
 function conf_automatica(){
@@ -560,7 +694,7 @@ write_config(){
 
 	echo  "options{
 	
-	directory \"var/cache/bind\"
+	directory \"/var/cache/bind\"
 	
 		forwarders {
 			
@@ -586,7 +720,7 @@ write_config(){
 	$doEXCLUDEyn
 
 	};
-	}" > /etc/bind/named.conf.options
+	};" > /etc/bind/named.conf.options
 	
 
 	echo -e "\n\nFIM!!!!!!!!!\n\n"
