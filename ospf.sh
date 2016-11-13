@@ -15,7 +15,7 @@ fi
 
 rede=( - - - - - )
 area=( - - - - - )
-id=( - - - - - )
+id= "-"
 
 mp_ospf(){
 	dialog --title "Configuracao de protocolo OSPF" \
@@ -80,56 +80,14 @@ echo "opção errada"
 	esac
 }
 
-id_ospfv6(){
-
-			if [ "${interface[$1]}" == "lo" ] || [ "${interface[$1]}" == "inexistente" ];then
-			rede[$1]="rede local ou inexistente"	
-
-			else
-			dialog --title "ID da interface ${interface[$1]}" \
-				--backtitle "ID da interface para configuracao do OSPF" \
-				--inputbox " Exemplo de rede ID 0.0.0.1 " 0 0 2>/tmp/id
-			id[$1]=$(cat /tmp/id)
-			fi
-}
-
-
 m_id_ospfv6(){
 
-		dialog --title "Configuração de redes OSPF" \
-			--menu "Digite as redes diretamente conectadas as interfaces" 0 0 0 \
-			"Id da interface ${interface[1]}" "${id[1]}" \
-			"Id da interface ${interface[2]}" "${id[2]}" \
-			"Id da interface ${interface[3]}" "${id[3]}" \
-			"Id da interface ${interface[4]}" "${id[4]}" \
-		        VOLTAR '' 2> /tmp/opcao
-			opt=$(cat /tmp/opcao)
-			case $opt in
-			
-			"Id da interface ${interface[1]}")
-			id_ospfv6 1
-			m_id_ospfv6 $1
-			;;
-		"Id da interface ${interface[2]}")
-			id_ospfv6 2
-			m_id_ospfv6 $1
-			;;
-		"Id da interface ${interface[3]}")
-			id_ospfv6 3
-			m_id_ospfv6 $1
-			;;
-		"Id da interface ${interface[4]}")
-			id_ospfv6 4
-			m_id_ospfv6 $1
-			;;
-		"VOLTAR")
-			ospf_menu $1	
-			;;
-			*)
-			echo "opção errada"
-			;;
+			dialog --title "ID  do dispositivo}" \
+				--backtitle "ID do dispositivo para configuracao do OSPF" \
+				--inputbox " Exemplo de rede ID 0.0.0.1 " 0 0 2>/tmp/id
+			id=$(cat /tmp/id)
 
-			esac
+	ospf_menu $1
 }
 
 conf_ospf(){
@@ -225,6 +183,7 @@ match ipv6 address prefix-list test-prefix
 set metric-type type-2
 set metric 2000
 !
+line vty
 access-class access4
 ipv6 access-class access6
 exec-timeout 0 0
@@ -241,8 +200,8 @@ rede_ospf(){
 
 			else
 			dialog --title "Digite as redes diretamente conectadas a interface ${interface[$1]}" \
-				--backtitle "Configuração OSPF da rede IPV4" \
-				--inputbox "Exemplo de rede 192.168.1.0/24" 0 0 2>/tmp/redes
+				--backtitle "Configuração OSPF " \
+				--inputbox "Exemplo de rede 192.168.1.0/24 ou 2001:db8:1:1::/64" 0 0 2>/tmp/redes
 			rede[$1]=$(cat /tmp/redes)
 			fi
 }
@@ -293,7 +252,7 @@ area_ospf(){
 
 			else
 			dialog --title "Digite a area da interface ${interface[$1]}" \
-				--backtitle "Configuração da area OSPF da rede IPV4" \
+				--backtitle "Configuração da area OSPF" \
 				--inputbox "Exemplo de rede 0.0.0.0" 0 0 2>/tmp/area
 			area[$1]=$(cat /tmp/area)
 			fi
