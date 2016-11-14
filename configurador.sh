@@ -1,11 +1,11 @@
 #Identificacao de interfaces de rede
 ls /sys/class/net > /tmp/if.txt     #Lista as interfaces e escreve no arquivo if.txt
 numero=$(wc -l < /tmp/if.txt)       #Conta a quantidade de interfaces(linhas) do sistema 
-interface=(inexistente inexistente inexistente inexistente)
+interface=(inexistente inexistente inexistente inexistente inexistente)
 #Se a quantidade de interfaces for menor ou igual a 4 escreve nas posicoes de 0 a 3 do vetor de interfaces
 if [ $numero -le 4 ];then
 contador=1
-until [ $contador -eq $numero ];do
+until [ $contador -gt $numero ];do
 interface[$contador]=$(sed -n $contador'p' /tmp/if.txt) 
 let contador+=1
 done
@@ -18,19 +18,20 @@ ip=( - - - - - )
 function config_if(){
 	
 	dialog	--title "Configuracao Manual" \
-		--menu "Escolha uma Interface" 0 0 0 \
-	        "Endereçamento IPv4" "Configura interfaces de rede com IPv4" \
-	        "Endereçamento IPv6" "Configura interfaces de rede com IPv6" \
+		--menu "Escolha uma opcao" 0 0 0 \
+	        "IPv4" "Configura interfaces de rede IPv4" \
+	        "IPv6" "Configura interfaces de rede IPv6" \
 	        "Roteamento" "Configura rotas redes com interfaces de rede IPv6 ou IPv4" \
 	        "SNAT" "Realiza SNAT via Iptables" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
 		case $opt in
-		"Endereçamento IPv4")
+
+	    "IPv4")
 			config_endereco 4
 		;;
 
-		"Endereçamento IPv6")
+	    "IPv6")
 			config_endereco 6
 		;;
 	    "Roteamento")
@@ -50,18 +51,20 @@ function config_if(){
 	endereco_ip(){
 
 		if [ $1 -eq 4 ]; then
-				dialog	--title "Config ${interface[$2]}" \
+
+				dialog	--title "Configuracao IPv4" \
 					--inputbox "Favor Digitar Endereco_IP/(CIDR)" 0 0 2>/tmp/eth.conf
 					sudo ip addr flush dev ${interface[$2]}
 					sudo ip link set ${interface[$2]} up 
 					ip[$2]=$(cat /tmp/eth.conf)
-					sudo ip addr add ${ip[$2]} dev ${interface[$2]}  
-				        sudo ip addr show dev ${interface[$2]} >/tmp/eth.log
+					sudo ip  addr add ${ip[$2]} dev ${interface[$2]}  
+				    sudo ip  addr show dev ${interface[$2]} >/tmp/eth.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth.log 22 70
+
 				else
 
-					dialog	--title "Config ${interface[$2]}" \
+					dialog	--title "Configuracao IPv6" \
 					--inputbox "Favor Digitar Endereco_IP/(CIDR)" 0 0 2>/tmp/eth.conf
 					sudo ip addr flush dev ${interface[$2]}
 					sudo ip link set ${interface[$2]} up 
@@ -70,42 +73,42 @@ function config_if(){
 				    sudo ip -6 addr show dev ${interface[$2]} >/tmp/eth.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth.log 22 70
-				fi
 
-				config_endereco $1
+				fi
 
 		}
 
-function config_endereco(){
-	dialog	--title "Configuracao Manual" \
-		--menu "Escolha uma Interface" 0 0 0 \
-	        ${interface[1]} "Interface de rede 1" \
-	        ${interface[2]} "Interface de rede 2" \
-	        ${interface[3]} "Interface de rede 3" \
-	        ${interface[4]} "Interface de rede 3" \
+config_endereco(){
+
+	dialog	--title "Interface para configuracao" \
+		--menu "Escolha a Interface que se deseja configura endereco IP" 0 0 0 \
+	        "${interface[1]}" "Interface de rede 1" \
+	        "${interface[2]}" "Interface de rede 2" \
+	        "${interface[3]}" "Interface de rede 3" \
+			"${interface[4]}" "Interface de rede 4" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
 		
 		case $opt in
 
-			${interface[1]})
+			"${interface[1]}")
 			endereco_ip $1 1
 				;;
 
-			${interface[2]})
+			"${interface[2]}")
 			endereco_ip $1 2
 				;;
 
-			${interface[3]})
+			"${interface[3]}")
 			endereco_ip $1 3
 				;;
 
-			${interface[4]})
+			"${interface[4]}")
 			endereco_ip $1 4
 				;;
 
 			"VOLTAR")
-		        config_if	
+			config_if	
 				;;
 
 			*)
