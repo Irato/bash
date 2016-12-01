@@ -747,7 +747,8 @@ mp_ospf(){
 	dialog --title "Configuracao de protocolo OSPF" \
 			--menu "Escolha o protocolo IP para configuracao OSPF" 0 0 0 \
 			"Protocolo IPv4" "" \
-			"Protocolo IPv6" '' 2>/tmp/opcao
+			"Protocolo IPv6" "" \
+			"VOLTAR" '' 2>/tmp/opcao
 	        opt=$(cat /tmp/opcao)
 			case $opt in
 
@@ -762,6 +763,9 @@ mp_ospf(){
 					area=( - - - - - )
 					id= "-"
 					ospf_menu 6
+						;;
+					"VOLTAR") 
+						voltar
 						;;
 				*)
 					echo "fim de script"
@@ -792,7 +796,7 @@ ospf_menu(){
 			;;
 		"Configurar OSPF")
 			if [ $1 -eq 4 ]; then
-		conf_ospf
+		conf_ospfv4
 	else
 		conf_ospfv6
 			fi	
@@ -816,7 +820,7 @@ m_id_ospfv6(){
 	ospf_menu $1
 }
 
-conf_ospf(){
+conf_ospfv4(){
 daemons 4
 nome=$(hostname)
 
@@ -850,7 +854,7 @@ network ${rede[$contador]} area ${area[$contador]}" >> /etc/quagga/ospfd.conf
     fi
 let contador+=1
 done
-
+voltar
 }
 
 conf_ospfv6(){
@@ -915,6 +919,8 @@ ipv6 access-class access6
 exec-timeout 0 0
 !
 " >> /etc/quagga/ospf6d.conf
+
+voltar
 
 }
 
