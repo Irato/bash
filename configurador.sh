@@ -117,6 +117,7 @@ config_endereco(){
 			esac
 }
 
+rota_interface="-"
 m_rota(){
 
 	dialog	--title "Configuracao Rota estatica" \
@@ -188,8 +189,8 @@ m_rota(){
 digita_rota(){
 
 					dialog	--title "Configuracao de rota default" \
-					--inputbox "Digite o endereco da interface de rede do proximo salto Endereco_IP/(CIDR)" 0 0 2>/tmp/rota_salto.conf
-					rota_salto=$(cat /tmp/rota_ip.conf)
+					--inputbox "Digite o endereco da interface de rede do proximo salto Endereco_IP" 0 0 2>/tmp/rota_salto.conf
+					rota_salto=$(cat /tmp/rota_salto.conf)
 
 				if [ $1 -eq 2 ]; then
 					dialog	--title "Configuracao de rota estatica" \
