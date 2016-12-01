@@ -61,6 +61,7 @@ function config_if(){
 				    sudo ip  addr show dev ${interface[$2]} >/tmp/eth.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth.log 22 70
+					config_if
 
 				else
 
@@ -73,9 +74,8 @@ function config_if(){
 				    sudo ip -6 addr show dev ${interface[$2]} >/tmp/eth.log
 					dialog	--backtitle "Resultado Configuracao.." \
 						--textbox /tmp/eth.log 22 70
-
+					config_if
 				fi
-
 		}
 
 config_endereco(){
@@ -140,10 +140,12 @@ m_rota(){
 		"Rota default")
 		digita_rota 1
 		ip route add default via $rota_salto dev $rota_interface
+		m_rota
 		;;
 		"Rota para rede especifica")
 		digita_rota 2
 		ip route add $rota_ip via $rota_salto dev $rota_interface
+		m_rota
 		;;
 
 		"VOLTAR")
@@ -166,10 +168,12 @@ m_rota(){
 		"Rota default")
 		digita_rota 1
 		ip -6 route add default via $rota_salto dev $rota_interface
+		m_rota
 		;;
 		"Rota para rede especifica")
 		digita_rota 2
 		ip -6 route add $rota_ip via $rota_salto dev $rota_interface
+		m_rota
 		;;
 
 		"VOLTAR")
