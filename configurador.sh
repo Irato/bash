@@ -754,13 +754,13 @@ mp_ospf(){
 				"Protocolo IPv4")
 				rede=( - - - - - )
 				area=( - - - - - )
-				id=( - - - - - )
+				id= "-"
 				ospf_menu 4	
 					;;
 					"Protocolo IPv6") 
 					rede=( - - - - - )
 					area=( - - - - - )
-					id=( - - - - - )
+					id= "-"
 					ospf_menu 6
 						;;
 				*)
@@ -886,7 +886,7 @@ echo "!
 interface ${interface[$contador]}
 !
 router ospf6
-router-id ${id[$contador]}
+router-id ${id}
 redistribute static
 redistribute connected
 area  ${area[$contador]} range ${rede[$contador]}
