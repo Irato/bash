@@ -388,7 +388,7 @@ esac
 }
 
 conf_zebra(){
-daemons
+
 nome=$(hostname)
 
 echo "
@@ -441,6 +441,8 @@ ipv6 address ${zebra[$contador]}
 let contador+=1
 done
 fi
+
+m_zebra $1
 
 }
 
@@ -859,7 +861,9 @@ network ${rede[$contador]} area ${area[$contador]}" >> /etc/quagga/ospfd.conf
     fi
 let contador+=1
 done
+
 voltar
+
 }
 
 conf_ospfv6(){
