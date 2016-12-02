@@ -21,7 +21,7 @@ function config_if(){
 		--menu "Escolha uma opcao" 0 0 0 \
 	        "IPv4" "Configura interfaces de rede IPv4" \
 	        "IPv6" "Configura interfaces de rede IPv6" \
-	        "Roteamento" "Configura rotas redes com interfaces de rede IPv6 ou IPv4" \
+	        "Roteamento" "Configura rotas de redes com interfaces de IPv6 ou IPv4" \
 	        "SNAT" "Realiza SNAT via Iptables" \
 		VOLTAR '' 2> /tmp/opcao
 		opt=$(cat /tmp/opcao)
@@ -247,9 +247,9 @@ m_snaat(){
 				--inputbox "Digite ENDERECO_IP/(CIDR)" 0 0 2>/tmp/mux
 			fonte=$(cat /tmp/mux)
 
-			dialog --title "Digite o enderecos destino" \
+			dialog --title "Digite o endereco de destino" \
 				--backtitle "Endereço de rede que ira representar os endereços da pool" \
-				--inputbox "Digite ENDERECO_IP/(CIDR)" 0 0 2>/tmp/mux
+				--inputbox "Digite ENDERECO_IP" 0 0 2>/tmp/mux
 			destino=$(cat /tmp/mux)
 
 	dialog	--title "Interface SNAT" \
@@ -442,7 +442,7 @@ let contador+=1
 done
 fi
 
-m_zebra $1
+voltar
 
 }
 
@@ -1077,13 +1077,13 @@ mp_ospf
 function voltar(){
 dialog	--title "Tela de Controle" \
 	--menu "Escolha uma opcao:" 0 0 0 \
-	"IP" "Configuracao  estatica do roteamento e interfaces de rede" \
+	"Configuracoes diversas" "Configuracao  estatica do roteamento e interfaces de rede" \
     "Quagga" "Configuracao das interfaces de rede e OSPF via Quagga" \
 	"NAT64" "Configuração do tayga no host de desejado" \
 	"DNS64" "Configuração do BIND no host desejado"  2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
-		"IP")
+		"Configuracoes diversas")
 			config_if
 			;;
 		"Quagga")
@@ -1101,16 +1101,16 @@ dialog	--title "Tela de Controle" \
 #Menu Principal 
 dialog	--title "Tela de Controle" \
 	--menu "Escolha uma opcao:" 0 0 0 \
-	IP "Configuracao  Manual" \
-    "Experimento" "Configuracao automatica dos hosts do experimento NAT64/DNS64" \
-	"NAT64" "Configuração do tayga no host D" \
-	"DNS64" "Configuração do BIND no host D"  2> /tmp/opcao
+	"Configuracoes diversas" "Configuracao  estatica do roteamento e interfaces de rede" \
+    "Quagga" "Configuracao das interfaces de rede e OSPF via Quagga" \
+	"NAT64" "Configuração do tayga no host de desejado" \
+	"DNS64" "Configuração do BIND no host desejado"  2> /tmp/opcao
 	opt=$(cat /tmp/opcao)
 	case $opt in
-		"IP")
+		"Configuracoes diversas")
 			config_if
 			;;
-		"Experimento")
+		"Quagga")
 			conf_automatica	
 			;;
 		"NAT64")
